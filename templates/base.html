@@ -4,302 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrepMind AI | AI Technical Interviewer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'g-blue': '#1A73E8',
+                        'g-blue-hover': '#1b66c9',
+                        'g-red': '#EA4335',
+                        'g-yellow': '#FBBC04',
+                        'g-green': '#34A853',
+                        'g-bg': '#F8F9FA',
+                        'g-surface': '#FFFFFF',
+                        'g-border': '#DADCE0',
+                        'g-text-primary': '#202124',
+                        'g-text-secondary': '#5F6368',
+                    },
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Use Inter to simulate Google Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            /* Google Pixel Light Theme */
-            --bg-color: #F8F9FA;
-            --surface-color: #FFFFFF;
-            --text-primary: #202124;
-            --text-secondary: #5F6368;
-            --primary-color: #1A73E8;
-            --primary-hover: #174EA6;
-            --google-red: #EA4335;
-            --google-yellow: #FBBC05;
-            --google-green: #34A853;
-            --border-radius: 28px;
-            --btn-radius: 24px;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* Navbar */
-        nav {
-            padding: 1.5rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: var(--text-primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo i {
-            color: var(--primary-color);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px 28px;
-            border-radius: var(--btn-radius);
-            font-weight: 500;
-            font-size: 1rem;
-            text-decoration: none;
-            transition: var(--transition);
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            box-shadow: 0 4px 6px rgba(26, 115, 232, 0.15);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 14px rgba(26, 115, 232, 0.2);
-        }
-
-        .btn-google {
-            background-color: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid #DADCE0;
-        }
-
-        .btn-google:hover {
-            background-color: #F8F9FA;
-            border-color: #D2E3FC;
-        }
-
-        .btn-google img {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Content Area */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 2.5rem;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 700;
-            letter-spacing: -1.5px;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            max-width: 800px;
-            color: var(--text-primary);
-        }
-
-        h1 span.blue { color: var(--primary-color); }
-        h1 span.red { color: var(--google-red); }
-        h1 span.yellow { color: var(--google-yellow); }
-        h1 span.green { color: var(--google-green); }
-
-        .subtitle {
-            font-size: clamp(1.1rem, 2vw, 1.25rem);
-            color: var(--text-secondary);
-            max-width: 650px;
-            margin-bottom: 3.5rem;
-            font-weight: 400;
-        }
-
-        /* Feature Cards */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            width: 100%;
-            margin-top: 5rem;
-        }
-
-        .feature-card {
-            background: var(--surface-color);
-            padding: 2.5rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            border: 1px solid #F1F3F4;
-            text-align: left;
-            transition: var(--transition);
-        }
-
-        .feature-card:hover {
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-            transform: translateY(-4px);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            background: #E8F0FE;
-            color: var(--primary-color);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .feature-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .feature-card p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        /* Dashboard UI Mockup Wrapper */
-        .mockup-wrapper {
-            margin-top: 4rem;
-            width: 100%;
-            background: var(--surface-color);
-            border-radius: var(--border-radius);
-            padding: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            border: 1px solid #E8EAED;
-        }
-
-        .mockup-header {
-            display: flex;
-            gap: 8px;
-            padding: 10px 15px;
-        }
-
-        .mockup-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #E8EAED;
-        }
-
-        .mockup-dot:nth-child(1) { background: #EA4335; } /* Red */
-        .mockup-dot:nth-child(2) { background: #FBBC05; } /* Yellow */
-        .mockup-dot:nth-child(3) { background: #34A853; } /* Green */
-
-        .mockup-content {
-            background: #F1F3F4;
-            border-radius: 20px;
-            padding: 2.5rem;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            text-align: left;
-        }
-
-        .user-block {
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            margin-left: max(0px, calc(100% - 70%));
-        }
-        
-        .ai-block {
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            max-width: 80%;
-        }
-
-        .avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        
-        .ai-avatar {
-            background: var(--surface-color);
-            color: var(--primary-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #E8EAED;
-        }
-
-        .chat-bubble {
-            background: var(--primary-color);
-            color: white;
-            padding: 16px 20px;
-            border-radius: 24px;
-            border-bottom-right-radius: 6px;
-            box-shadow: 0 4px 10px rgba(26, 115, 232, 0.15);
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        .ai-bubble {
-            background: var(--surface-color);
-            color: var(--text-primary);
-            border-radius: 24px;
-            border-bottom-left-radius: 6px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            border: 1px solid #E8EAED;
-        }
-
+        body { font-family: 'Outfit', 'Inter', sans-serif; }
     </style>
 </head>
-<body>
-    
+<body class="bg-g-bg text-g-text-primary min-h-screen flex flex-col antialiased">
     {% block content %}
     {% endblock %}
-
 </body>
 </html>

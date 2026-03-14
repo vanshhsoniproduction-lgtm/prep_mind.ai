@@ -2,19 +2,19 @@
 {% load socialaccount %}
 
 {% block content %}
-<nav>
-    <a href="/" class="logo">
-        <i class="fa-solid fa-microphone-lines"></i> PrepMind AI
+<nav class="flex justify-between items-center px-8 py-5 max-w-7xl mx-auto w-full">
+    <a href="/" class="text-2xl font-bold tracking-tight text-g-text-primary flex items-center gap-3 no-underline">
+        <i class="fa-solid fa-microphone-lines text-g-blue"></i> PrepMind AI
     </a>
     <div>
         {% if user.is_authenticated %}
-            <a href="#" class="btn btn-primary">Go to Dashboard</a>
+            <a href="{% url 'core:dashboard' %}" class="inline-flex items-center justify-center px-6 py-3 bg-g-blue text-white rounded-full font-medium shadow-md hover:bg-g-blue-hover transition-all">Go to Dashboard</a>
         {% else %}
             <!-- This triggers django-allauth Google OAuth -->
-            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline;">
+            <form action="{% provider_login_url 'google' %}" method="post" class="inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-google">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-g-text-primary border border-g-border rounded-full font-medium hover:bg-gray-50 transition-all shadow-sm">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5">
                     Sign in with Google
                 </button>
             </form>
@@ -22,18 +22,25 @@
     </div>
 </nav>
 
-<main>
-    <h1>The ultimate <span class="blue">A</span><span class="red">I</span> <span class="yellow">I</span>nterviewer <span class="green">for real-world prep.</span></h1>
-    <p class="subtitle">Experience fully conversational, adaptive, and voice-interactive tech interviews. Get detailed feedback on communication and coding.</p>
+<main class="flex flex-col items-center justify-center flex-1 text-center px-4 py-16">
+    <h1 class="text-5xl md:text-6xl font-bold max-w-4xl leading-tight mb-6 tracking-tight text-g-text-primary">
+        The ultimate <span class="text-g-blue">A</span><span class="text-g-red">I</span> 
+        <span class="text-g-yellow">I</span>nterviewer <span class="text-g-green">for real-world prep.</span>
+    </h1>
+    <p class="text-xl text-g-text-secondary max-w-2xl mb-12">
+        Experience fully conversational, adaptive, and voice-interactive tech interviews. Get detailed feedback on communication and coding.
+    </p>
 
-    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+    <div class="flex justify-center gap-4 mb-20">
         {% if user.is_authenticated %}
-            <a href="#" class="btn btn-primary" style="padding: 15px 32px; font-size: 1.1rem;">Start Mock Interview</a>
+            <a href="{% url 'core:dashboard' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg bg-g-blue text-white rounded-full font-medium shadow-md hover:bg-g-blue-hover hover:-translate-y-0.5 transition-all">
+                Start Mock Interview
+            </a>
         {% else %}
-            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline;">
+            <form action="{% provider_login_url 'google' %}" method="post" class="inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-primary" style="padding: 15px 32px; font-size: 1.1rem; gap: 15px;">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width: 24px; border-radius: 50%; background: white; padding: 2px;">
+                <button type="submit" class="inline-flex gap-3 items-center justify-center px-8 py-4 text-lg bg-g-blue text-white rounded-full font-medium shadow-md hover:bg-g-blue-hover hover:-translate-y-0.5 transition-all">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-6 bg-white rounded-full p-0.5">
                     Continue with Google
                 </button>
             </form>
@@ -41,55 +48,64 @@
     </div>
 
     <!-- Live Demo Visual -->
-    <div class="mockup-wrapper">
-        <div class="mockup-header">
-            <div class="mockup-dot"></div>
-            <div class="mockup-dot"></div>
-            <div class="mockup-dot"></div>
+    <div class="w-full max-w-3xl bg-white border border-g-border rounded-2xl shadow-lg overflow-hidden mb-16 text-left">
+        <div class="bg-gray-100 px-4 py-3 flex gap-2 border-b border-g-border">
+            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+            <div class="w-3 h-3 rounded-full bg-green-400"></div>
         </div>
-        <div class="mockup-content">
-            <div class="ai-block">
-                <div class="avatar ai-avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="chat-bubble ai-bubble" style="font-weight: 500;">
+        <div class="p-6 flex flex-col gap-6">
+            <div class="flex gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-g-blue flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-gray-100 px-5 py-3 rounded-2xl rounded-tl-none text-g-text-primary text-[15px]">
                     Hello! I'll be your interviewer today. I see you built a Django API. Can you explain your database choice?
                 </div>
             </div>
-            <div class="user-block">
-                <div class="avatar"><i class="fa-regular fa-user"></i></div>
-                <div class="chat-bubble">
+            
+            <div class="flex gap-4 flex-row-reverse">
+                <div class="w-10 h-10 rounded-full bg-gray-200 text-g-text-secondary flex items-center justify-center flex-shrink-0">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="bg-g-blue text-white px-5 py-3 rounded-2xl rounded-tr-none text-[15px]">
                     Yes, I chose PostgreSQL for its robust JSON support and ACID compliance for our order system.
                 </div>
             </div>
-            <div class="ai-block">
-                <div class="avatar ai-avatar"><i class="fa-solid fa-robot"></i></div>
-                <div class="chat-bubble ai-bubble">
+
+            <div class="flex gap-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-g-blue flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-gray-100 px-5 py-3 rounded-2xl rounded-tl-none text-g-text-primary text-[15px]">
                     Great. How did you optimize query performance for large read volumes?
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="features">
-        <div class="feature-card">
-            <div class="feature-icon">
+    <!-- Features -->
+    <div class="grid md:grid-cols-3 gap-8 max-w-5xl w-full text-left">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-g-blue flex items-center justify-center text-xl mb-4">
                 <i class="fa-solid fa-microphone-alt"></i>
             </div>
-            <h3>Full Voice Interaction</h3>
-            <p>Speak naturally just like a real interview. PrepMind listens, analyzes, and responds.</p>
+            <h3 class="text-lg font-semibold mb-2">Full Voice Interaction</h3>
+            <p class="text-g-text-secondary text-sm leading-relaxed">Speak naturally just like a real interview. PrepMind listens, analyzes, and responds.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-green-50 text-g-green flex items-center justify-center text-xl mb-4">
                 <i class="fa-solid fa-code"></i>
             </div>
-            <h3>Built-in Coding</h3>
-            <p>Seamlessly transition from system design discussion to live coding algorithms.</p>
+            <h3 class="text-lg font-semibold mb-2">Built-in Coding</h3>
+            <p class="text-g-text-secondary text-sm leading-relaxed">Seamlessly transition from system design discussion to live coding algorithms.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-orange-50 text-[#E37400] flex items-center justify-center text-xl mb-4">
                 <i class="fa-solid fa-chart-line"></i>
             </div>
-            <h3>Smart Analytics</h3>
-            <p>Get a granular breakdown of your confidence, filler word usage, and technical accuracy.</p>
+            <h3 class="text-lg font-semibold mb-2">Smart Analytics</h3>
+            <p class="text-g-text-secondary text-sm leading-relaxed">Get a granular breakdown of your confidence, filler word usage, and technical accuracy.</p>
         </div>
     </div>
 </main>

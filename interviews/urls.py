@@ -7,6 +7,5 @@ urlpatterns = [
     path('start/', views.start_interview, name='start'),
     path('room/<int:session_id>/', views.room, name='room'),
     path('api/response/<int:session_id>/', views.handle_response, name='handle_response'),
-    path('api/tts/', views.get_tts, name='get_tts'),
-    path('api/transcribe/', views.transcribe, name='transcribe'),
+    path('api/evaluate/<int:session_id>/', views.evaluate_coding_round, name='evaluate_coding'),
 ]

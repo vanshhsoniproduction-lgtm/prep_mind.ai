@@ -1,482 +1,409 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<style>
-    body {
-        background-color: #202124 !important;
-        color: white !important;
-        margin: 0;
-        overflow: hidden;
-    }
-
-    nav { display: none; }
-
-    .room-container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        width: 100vw;
-    }
-
-    .room-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 25px;
-        background: rgba(0,0,0,0.5);
-    }
-
-    .room-title {
-        font-size: 1.1rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .timer {
-        background: rgba(255,255,255,0.1);
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-family: monospace;
-        font-size: 1.1rem;
-    }
-
-    .room-main {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-    }
-
-    .ai-orb-container {
-        position: absolute;
-        top: 25%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 30px;
-    }
-
-    .ai-orb {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        background: radial-gradient(circle, #1A73E8 0%, #174EA6 100%);
-        box-shadow: 0 0 50px rgba(26, 115, 232, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 3rem;
-        color: white;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .ai-orb.speaking {
-        animation: pulse 1s infinite alternate;
-        box-shadow: 0 0 100px rgba(26, 115, 232, 0.8), 0 0 150px rgba(52, 168, 83, 0.4);
-        transform: scale(1.1);
-    }
-
-    .ai-orb.listening {
-        background: radial-gradient(circle, #34A853 0%, #188038 100%);
-        box-shadow: 0 0 50px rgba(52, 168, 83, 0.5);
-        animation: listenPulse 1.5s infinite alternate;
-    }
-    
-    .ai-orb.thinking {
-        background: radial-gradient(circle, #FBBC05 0%, #F9A825 100%);
-        box-shadow: 0 0 50px rgba(251, 188, 5, 0.5);
-        animation: thinkPulse 0.8s infinite alternate;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); box-shadow: 0 0 40px rgba(26, 115, 232, 0.5); }
-        100% { transform: scale(1.15); box-shadow: 0 0 80px rgba(26, 115, 232, 0.9); }
-    }
-
-    @keyframes listenPulse {
-        0% { transform: scale(1); box-shadow: 0 0 30px rgba(52, 168, 83, 0.3); }
-        100% { transform: scale(1.05); box-shadow: 0 0 60px rgba(52, 168, 83, 0.7); }
-    }
-    
-    @keyframes thinkPulse {
-        0% { transform: scale(1); box-shadow: 0 0 30px rgba(251, 188, 5, 0.3); }
-        100% { transform: scale(1.08); box-shadow: 0 0 50px rgba(251, 188, 5, 0.7); }
-    }
-
-    .captions {
-        position: absolute;
-        bottom: 120px;
-        width: 80%;
-        max-width: 800px;
-        text-align: center;
-        font-size: 1.5rem;
-        font-weight: 500;
-        line-height: 1.4;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        min-height: 80px;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-    }
-
-    .captions .ai-text { color: white; }
-    .captions .user-text { color: #8AB4F8; font-style: italic; }
-
-    .room-controls {
-        background: rgba(32, 33, 36, 0.9);
-        padding: 20px 40px;
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        backdrop-filter: blur(10px);
-    }
-
-    .ctrl-btn {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        border: none;
-        background: #3C4043;
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: 0.2s;
-    }
-
-    .ctrl-btn:hover { background: #5F6368; }
-    
-    .ctrl-btn.mic-active {
-        background: #EA4335;
-        color: white;
-        animation: micGlow 1s infinite alternate;
-    }
-
-    @keyframes micGlow {
-        0% { box-shadow: 0 0 10px rgba(234, 67, 53, 0.3); }
-        100% { box-shadow: 0 0 25px rgba(234, 67, 53, 0.7); }
-    }
-
-    .ctrl-btn.btn-end {
-        background: #EA4335;
-        border-radius: 30px;
-        width: 100px;
-    }
-
-    .ctrl-btn.btn-end:hover { background: #D93025; }
-
-    .status-text {
-        position: absolute;
-        bottom: 100px;
-        font-size: 0.9rem;
-        color: #9AA0A6;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-</style>
-
-<div class="room-container">
-    <div class="room-header">
-        <div class="room-title">
-            <i class="fa-solid fa-microphone-lines" style="color: #8AB4F8;"></i>
-            PrepMind AI
-        </div>
-        <div class="timer" id="timerDisplay">00:00</div>
+<!-- Navbar area minimal -->
+<div class="h-16 border-b border-g-border bg-g-surface flex items-center justify-between px-6 shrink-0 shadow-sm relative z-50">
+    <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded bg-blue-500 text-white flex items-center justify-center font-bold shadow-md">P</div>
+        <h1 class="text-xl font-bold font-outfit tracking-tight text-gray-800">Prep<span class="text-blue-500">Mind</span>.ai</h1>
     </div>
-
-    <div class="room-main">
-        <div class="ai-orb-container">
-            <div class="ai-orb" id="aiOrb">
-                <i class="fa-solid fa-robot"></i>
-            </div>
-        </div>
-
-        <div class="status-text" id="statusText">CONNECTING...</div>
-
-        <div class="captions">
-            <div id="captionBox" class="ai-text">Initializing AI Engine...</div>
-        </div>
-    </div>
-
-    <div class="room-controls">
-        <button class="ctrl-btn" id="micBtn" disabled>
-            <i class="fa-solid fa-microphone-slash"></i>
-        </button>
-        <button class="ctrl-btn btn-end" id="endBtn">
-            <i class="fa-solid fa-phone-slash"></i>
+    <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100 shadow-inner">Live Session</span>
+        <button id="endSessionBtn" class="px-5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-medium text-sm transition-all shadow-sm">
+            End Session
         </button>
     </div>
 </div>
 
-<script>
-    const sessionId = "{{ session.id }}";
-    const csrfToken = "{{ csrf_token }}";
-    const initialQuestion = `{{ first_question_text|escapejs }}`;
-
-    const orb = document.getElementById('aiOrb');
-    const captions = document.getElementById('captionBox');
-    const statusText = document.getElementById('statusText');
-    const micBtn = document.getElementById('micBtn');
-    const endBtn = document.getElementById('endBtn');
-    const audioPlayer = new Audio();
+<div class="flex-1 flex overflow-hidden">
     
-    // Timer
-    let seconds = 0;
-    setInterval(() => {
-        seconds++;
-        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-        const s = (seconds % 60).toString().padStart(2, '0');
-        document.getElementById('timerDisplay').textContent = `${m}:${s}`;
-    }, 1000);
-
-    endBtn.addEventListener('click', () => {
-        if(confirm('End this interview session?')) {
-            window.location.href = '/dashboard/';
-        }
-    });
-
-    console.log("[ROOM] Session:", sessionId);
-    console.log("[ROOM] Initial Q:", initialQuestion);
-
-    // ============== STATE MACHINE ==============
-    let started = false;
-    let isBusy = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let mediaStream = null;
-
-    // ============== INIT ==============
-    document.addEventListener("DOMContentLoaded", async () => {
-        // Request mic permission early
-        try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("[MIC] ✅ Microphone permission granted");
-            statusText.textContent = "CLICK MIC TO START INTERVIEW";
-            captions.textContent = "Press the Microphone to Begin";
-            micBtn.disabled = false;
-        } catch(e) {
-            console.error("[MIC] ❌ Mic permission denied:", e);
-            statusText.textContent = "⚠️ MICROPHONE ACCESS REQUIRED";
-            captions.textContent = "Please allow microphone access and refresh the page.";
-            return;
-        }
+    <!-- LEFT PANE: Interviewer AI & Chat -->
+    <div id="interviewPane" class="flex-1 flex flex-col bg-gray-50 relative transition-all duration-300">
         
-        micBtn.addEventListener('click', () => {
-            if(isBusy) return;
+        <!-- AI Video / Visualizer -->
+        <div class="h-[45%] bg-slate-900 border-b-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden group p-6 shadow-md z-10 w-full">
             
-            if(!started) {
-                started = true;
-                console.log("[ROOM] 🚀 Interview started!");
-                fetchTTS(initialQuestion);
-            } else {
-                toggleRecording();
-            }
+            <!-- Pulsing AI Avatar -->
+            <div id="aiAvatar" class="w-32 h-32 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-transform duration-300 relative z-10 border-4 border-blue-400/30">
+                <i class="fas fa-robot text-4xl text-white"></i>
+            </div>
+            
+            <!-- Audio Waves (CSS Animations) -->
+            <div class="mt-8 flex gap-2 h-8 items-center transition-opacity duration-300" id="audioWaves" style="opacity: 0;">
+                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
+                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1.2s_ease-in-out_infinite_0.2s]"></div>
+                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_0.8s_ease-in-out_infinite_0.4s]"></div>
+                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1.1s_ease-in-out_infinite_0.1s]"></div>
+                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_0.9s_ease-in-out_infinite_0.3s]"></div>
+            </div>
+
+            <div class="absolute bottom-8 left-0 right-0 text-center px-8 z-20">
+                <p id="aiSubtitle" class="text-lg text-blue-50 font-medium bg-black/60 inline-block px-5 py-2.5 rounded-xl backdrop-blur-md max-w-2xl mx-auto shadow-2xl leading-relaxed border border-white/10">
+                    Connecting to AI Interviewer...
+                </p>
+            </div>
+            
+            <!-- Particles/Glow in Background -->
+            <div class="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent pointer-events-none"></div>
+        </div>
+
+        <!-- Transcript / Activity -->
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-gray-50" id="transcriptArea">
+            <div class="flex justify-center my-2">
+                <div class="bg-gray-200/80 text-gray-500 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner border border-gray-300/50">Session Started</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="bg-white border-t border-gray-200 p-6 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] z-10 flex flex-col items-center">
+            
+            <p id="systemStatus" class="text-sm text-gray-500 mb-3 font-medium">Ready when you are.</p>
+            
+            <div class="flex items-center gap-4">
+                <button id="micBtn" class="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-[0_5px_15px_rgba(37,99,235,0.4)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.5)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 transform hover:-translate-y-1">
+                    <i class="fas fa-microphone text-2xl"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-3 font-semibold uppercase tracking-wider">Push to Talk</p>
+        </div>
+    </div>
+
+    <!-- RIGHT PANE: Code Editor (Hidden by default unless coding) -->
+    <div id="codePane" class="w-1/2 border-l-2 border-gray-200 bg-white flex flex-col hidden transition-all duration-300 shadow-2xl z-20">
+        <div class="bg-slate-800 text-white px-5 py-3.5 flex items-center justify-between shadow-md z-10">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-laptop-code text-blue-400 text-lg"></i>
+                <h3 class="font-semibold tracking-wide">Coding Workspace</h3>
+            </div>
+            <select id="languageSelect" class="bg-slate-700 border border-slate-600 text-white text-sm rounded-lg px-4 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer hover:bg-slate-600 transition-colors">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+            </select>
+        </div>
+        
+        <!-- Problem Statement Area -->
+        <div class="p-6 bg-blue-50/50 border-b border-gray-200 max-h-56 overflow-y-auto shrink-0 shadow-sm z-10 relative">
+            <h4 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-tasks"></i> Problem Statement</h4>
+            <div id="problemText" class="text-sm text-gray-800 font-medium leading-relaxed bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                Loading problem...
+            </div>
+        </div>
+
+        <div id="editor" class="flex-1 w-full bg-white relative"></div>
+        
+        <div class="bg-white border-t border-gray-200 p-5 shrink-0 flex justify-between items-center shadow-[0_-5px_15px_rgba(0,0,0,0.03)] z-10 relative">
+            <span class="text-xs text-slate-500 font-semibold flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-md">
+                <i class="fas fa-bolt text-amber-500"></i> Code is evaluated automatically
+            </span>
+            <button id="submitCodeBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
+                <i class="fas fa-play"></i> Run & Submit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- RequireJS for Monaco Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+<script>
+    // --- Configuration ---
+    const sessionId = "{{ session.id }}";
+    const initialQuestion = "{{ first_question_text|escapejs }}";
+    
+    // UI Elements
+    const micBtn = document.getElementById('micBtn');
+    const aiSubtitle = document.getElementById('aiSubtitle');
+    const transcriptArea = document.getElementById('transcriptArea');
+    const systemStatus = document.getElementById('systemStatus');
+    const aiAvatar = document.getElementById('aiAvatar');
+    const audioWaves = document.getElementById('audioWaves');
+    const codePane = document.getElementById('codePane');
+    const problemText = document.getElementById('problemText');
+    const submitCodeBtn = document.getElementById('submitCodeBtn');
+    const endSessionBtn = document.getElementById('endSessionBtn');
+
+    // Add keyframes
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 28px; }
+        }
+        .mic-recording {
+            animation: pulse-red 1.5s infinite;
+            background-color: #ef4444 !important;
+            transform: scale(1.1);
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // --- Editor Setup ---
+    let editor;
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+        editor = monaco.editor.create(document.getElementById('editor'), {
+            value: '// Write your code here...\n',
+            language: 'javascript',
+            theme: 'vs-light',
+            minimap: { enabled: false },
+            fontSize: 14,
+            padding: { top: 20 },
+            scrollBeyondLastLine: false,
+            smoothScrolling: true,
+            cursorBlinking: "smooth",
+            automaticLayout: true
         });
     });
 
-    // ============== TTS (AI speaks) ==============
-    async function fetchTTS(textToSpeak) {
-        isBusy = true;
-        orb.className = "ai-orb thinking";
-        statusText.textContent = "AI IS GENERATING VOICE...";
-        captions.className = "ai-text";
-        captions.textContent = textToSpeak;
-        console.log("[TTS] 🔊 Requesting:", textToSpeak.substring(0, 80));
-
-        try {
-            const response = await fetch('/interviews/api/tts/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ text: textToSpeak })
-            });
-            const data = await response.json();
-            console.log("[TTS] Response:", data.status);
-            
-            if(data.status === 'success' && data.audio_url) {
-                playAudio(data.audio_url, textToSpeak);
-            } else {
-                browserTTS(textToSpeak);
-            }
-        } catch (error) {
-            console.error("[TTS] ❌", error);
-            browserTTS(textToSpeak);
+    document.getElementById('languageSelect').addEventListener('change', (e) => {
+        if (editor) {
+            monaco.editor.setModelLanguage(editor.getModel(), e.target.value);
         }
+    });
+
+    // --- Speech Synthesis ---
+    const synth = window.speechSynthesis;
+    let currentlySpeaking = false;
+    
+    function speakText(text) {
+        return new Promise((resolve) => {
+            synth.cancel(); 
+            currentlySpeaking = true;
+            
+            // Cleanup markdown formatting visually
+            const displayClean = text.replace(/#/g, '').trim();
+            aiSubtitle.innerText = displayClean;
+            
+            // Clean for speech
+            const cleanText = text.replace(/[*_#]/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            let voices = synth.getVoices();
+            let selectedVoice = voices.find(v => v.name.includes('Google') && v.name.includes('Female'));
+            if (!selectedVoice) selectedVoice = voices.find(v => (v.lang === 'en-US' || v.lang === 'en-GB') && v.name.includes('Female'));
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en-GB');
+            if (selectedVoice) utterance.voice = selectedVoice;
+            
+            utterance.rate = 1.05;
+            utterance.pitch = 1.1;
+
+            utterance.onstart = () => {
+                aiAvatar.classList.add('scale-110', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
+                audioWaves.style.opacity = '1';
+                addTranscriptMessage("Interviewer", displayClean, "ai");
+            };
+            
+            utterance.onend = () => {
+                aiAvatar.classList.remove('scale-110', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
+                audioWaves.style.opacity = '0';
+                currentlySpeaking = false;
+                resolve();
+            };
+            
+            utterance.onerror = () => {
+                aiAvatar.classList.remove('scale-110', 'border-blue-300');
+                audioWaves.style.opacity = '0';
+                currentlySpeaking = false;
+                resolve();
+            };
+
+            synth.speak(utterance);
+        });
     }
 
-    function browserTTS(text) {
-        console.log("[BROWSER-TTS] 🗣️ Fallback");
-        const synth = window.speechSynthesis;
-        synth.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        const voices = synth.getVoices();
-        u.voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
-        u.rate = 0.95;
-        
-        u.onstart = () => {
-            orb.className = "ai-orb speaking";
-            statusText.textContent = "AI IS SPEAKING";
-            captions.className = "ai-text";
-            captions.textContent = text;
-        };
-        u.onend = () => onAIDoneSpeaking();
-        u.onerror = () => { isBusy = false; statusText.textContent = "TTS ERROR. CLICK MIC."; };
-        synth.speak(u);
-    }
-    
-    function playAudio(audioUrl, text) {
-        console.log("[AUDIO] ▶️ Playing:", audioUrl);
-        audioPlayer.src = audioUrl;
-        audioPlayer.onplay = () => {
-            orb.className = "ai-orb speaking";
-            statusText.textContent = "AI IS SPEAKING";
-            captions.className = "ai-text";
-            captions.textContent = text;
-        };
-        audioPlayer.onended = () => onAIDoneSpeaking();
-        audioPlayer.onerror = () => browserTTS(text);
-        audioPlayer.play().catch(() => browserTTS(text));
-    }
-    
-    function onAIDoneSpeaking() {
-        console.log("[AUDIO] ⏹️ AI done speaking, auto-starting recording");
-        isBusy = false;
-        startRecording();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = () => {};
     }
 
-    // ============== RECORDING (MediaRecorder → ElevenLabs STT) ==============
-    function toggleRecording() {
-        if(mediaRecorder && mediaRecorder.state === 'recording') {
-            stopRecording();
+    // --- Speech Recognition ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isRecording = false;
+    
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            isRecording = true;
+            micBtn.classList.add('mic-recording');
+            micBtn.innerHTML = '<i class="fas fa-stop text-2xl"></i>';
+            systemStatus.innerText = "Listening... (Click to stop)";
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0].transcript)
+                .join('');
+            aiSubtitle.innerText = transcript;
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            micBtn.classList.remove('mic-recording');
+            micBtn.innerHTML = '<i class="fas fa-microphone text-2xl"></i>';
+            systemStatus.innerText = "Processing...";
+            
+            if (aiSubtitle.innerText && aiSubtitle.innerText !== "Listening..." && !aiSubtitle.innerText.includes("Thinking") && !aiSubtitle.innerText.includes("Ready")) {
+                const textToSend = aiSubtitle.innerText;
+                addTranscriptMessage("You", textToSend, "user");
+                aiSubtitle.innerText = "Thinking...";
+                sendResponse(textToSend);
+            } else {
+                systemStatus.innerText = "Ready when you are.";
+                aiSubtitle.innerText = "Awaiting your response.";
+            }
+        };
+
+        recognition.onerror = (event) => {
+            systemStatus.innerText = "Error: " + event.error;
+            isRecording = false;
+            micBtn.classList.remove('mic-recording');
+            micBtn.innerHTML = '<i class="fas fa-microphone text-2xl"></i>';
+        };
+    } else {
+        alert("Speech recognition is not supported in this browser. Please use Chrome.");
+    }
+
+    // Event Listeners
+    micBtn.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
         } else {
-            startRecording();
+            if(currentlySpeaking) synth.cancel();
+            aiSubtitle.innerText = "Listening...";
+            recognition.start();
         }
-    }
+    });
 
-    function startRecording() {
-        if(isBusy) return;
-        if(mediaRecorder && mediaRecorder.state === 'recording') return;
+    submitCodeBtn.addEventListener('click', () => {
+        const code = editor.getValue();
+        const language = document.getElementById('languageSelect').value;
+        const problem = problemText.innerText;
         
-        console.log("[REC] 🔴 Starting recording...");
-        audioChunks = [];
-        
-        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
-        
-        mediaRecorder.ondataavailable = (e) => {
-            if(e.data.size > 0) {
-                audioChunks.push(e.data);
-            }
-        };
-        
-        mediaRecorder.onstop = () => {
-            console.log("[REC] ⏹️ Recording stopped, sending to ElevenLabs STT...");
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            console.log("[REC] 📦 Audio blob size:", audioBlob.size, "bytes");
-            sendAudioForTranscription(audioBlob);
-        };
-        
-        mediaRecorder.start();
-        
-        micBtn.className = "ctrl-btn mic-active";
-        micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-        orb.className = "ai-orb listening";
-        statusText.textContent = "🔴 RECORDING... CLICK MIC TO STOP";
-        captions.className = "user-text";
-        captions.textContent = "Speak now... Click mic when done.";
-    }
-
-    function stopRecording() {
-        if(mediaRecorder && mediaRecorder.state === 'recording') {
-            console.log("[REC] 🛑 Stopping...");
-            mediaRecorder.stop();
-            micBtn.className = "ctrl-btn";
-            micBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
+        if (code.trim().length <= 5) {
+            alert("Please write some code first.");
+            return;
         }
-    }
+        
+        submitCodeBtn.disabled = true;
+        submitCodeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Evaluating...';
+        addTranscriptMessage("System", "Code submitted for evaluation...", "sys");
 
-    // ============== SEND AUDIO TO BACKEND FOR STT ==============
-    async function sendAudioForTranscription(audioBlob) {
-        isBusy = true;
-        orb.className = "ai-orb thinking";
-        statusText.textContent = "TRANSCRIBING YOUR SPEECH...";
-        captions.className = "user-text";
-        captions.textContent = "Processing audio...";
-        
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-        
-        console.log("[STT] 📤 Sending audio to /interviews/api/transcribe/");
-        
-        try {
-            const response = await fetch('/interviews/api/transcribe/', {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrfToken },
-                body: formData
-            });
-            const data = await response.json();
-            console.log("[STT] 📥 Response:", data);
+        fetch('/interviews/api/evaluate/' + sessionId + '/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, language, problem })
+        })
+        .then(res => res.json())
+        .then(data => {
+            submitCodeBtn.disabled = false;
+            submitCodeBtn.innerHTML = '<i class="fas fa-play"></i> Run & Submit';
             
-            if(data.status === 'success' && data.transcript && data.transcript.trim().length > 0) {
-                console.log("[STT] ✅ Transcript:", data.transcript);
-                captions.className = "user-text";
-                captions.textContent = `"${data.transcript}"`;
-                
-                // Small delay to show the transcript, then send to Gemini
-                setTimeout(() => sendToGemini(data.transcript), 1000);
-            } else {
-                console.log("[STT] ⚠️ Empty transcript");
-                isBusy = false;
-                statusText.textContent = "COULDN'T HEAR YOU. CLICK MIC TO TRY AGAIN.";
-                captions.textContent = "Try speaking louder or longer.";
-            }
-        } catch(error) {
-            console.error("[STT] ❌ Error:", error);
-            isBusy = false;
-            statusText.textContent = "TRANSCRIPTION ERROR. CLICK MIC TO RETRY.";
-        }
-    }
-
-    // ============== SEND TO GEMINI ==============
-    async function sendToGemini(text) {
-        orb.className = "ai-orb thinking";
-        statusText.textContent = "AI IS THINKING...";
-        captions.className = "ai-text";
-        captions.textContent = "Generating response...";
-        
-        console.log("[GEMINI] 📤 Sending:", text.substring(0, 80));
-        
-        try {
-            const response = await fetch(`/interviews/api/response/${sessionId}/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ transcript: text })
-            });
-            const data = await response.json();
-            console.log("[GEMINI] 📥 Response:", data.status, data.ai_text?.substring(0, 80));
-            
-            if(data.status === 'success') {
-                if(data.audio_url) {
-                    playAudio(data.audio_url, data.ai_text);
-                } else {
-                    browserTTS(data.ai_text);
+            if (data.status === 'success') {
+                if(data.type !== 'coding') {
+                   codePane.classList.add('hidden'); 
                 }
-            } else {
-                isBusy = false;
-                statusText.textContent = "ERROR. CLICK MIC TO TRY AGAIN.";
+                
+                speakText(data.ai_text).then(() => {
+                    if (data.is_ended) {
+                        window.location.href = '/core/dashboard/';
+                    }
+                });
             }
-        } catch (error) {
-            console.error("[GEMINI] ❌", error);
-            isBusy = false;
-            statusText.textContent = "CONNECTION ERROR. CLICK MIC TO RETRY.";
-        }
+        }).catch(e => {
+            console.error(e);
+            submitCodeBtn.disabled = false;
+            submitCodeBtn.innerHTML = '<i class="fas fa-play"></i> Run & Submit';
+            alert("An error occurred while evaluating your code.");
+        });
+    });
+    
+    endSessionBtn.addEventListener('click', () => {
+       if(confirm('Are you sure you want to end this interview?')) {
+           window.location.href = '/core/dashboard/'; 
+       }
+    });
+
+    // --- Network / Communication ---
+    function sendResponse(transcript) {
+        fetch('/interviews/api/response/' + sessionId + '/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transcript })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'error') {
+                systemStatus.innerText = "Error: " + data.message;
+                return;
+            }
+            
+            if (data.is_ended) {
+                speakText(data.ai_text).then(() => {
+                    alert("Interview Concluded. Redirecting to Dashboard.");
+                    window.location.href = '/core/dashboard/';
+                });
+                return;
+            }
+
+            systemStatus.innerText = "Ready when you are.";
+            
+            if (data.type === 'coding') {
+                codePane.classList.remove('hidden');
+                problemText.innerHTML = data.problem ? data.problem.replace(/\n/g, '<br>') : "Please solve the problem described by the interviewer.";
+                if(data.language && document.getElementById('languageSelect').querySelector(`option[value="${data.language}"]`)) {
+                    document.getElementById('languageSelect').value = data.language;
+                    if(editor) monaco.editor.setModelLanguage(editor.getModel(), data.language);
+                }
+                // layout editor to fix width bug when revealing dynamically
+                setTimeout(() => { if(editor) editor.layout(); }, 350);
+            } else {
+                codePane.classList.add('hidden');
+            }
+            
+            speakText(data.ai_text);
+        })
+        .catch(err => {
+            console.error("Fetch error: ", err);
+            systemStatus.innerText = "Network error. Try again.";
+        });
     }
+
+    // --- Helpers ---
+    function addTranscriptMessage(sender, text, type="user") {
+        const div = document.createElement('div');
+        
+        if(type === 'ai') {
+            div.className = "p-5 rounded-2xl max-w-[85%] mb-2 shadow-sm bg-white border border-gray-100 self-start mr-auto relative";
+            div.innerHTML = `<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider absolute -top-2.5 left-5 border border-blue-200 shadow-sm">${sender}</span><p class="mt-1 leading-relaxed text-gray-800 font-medium text-[15px]">${text.replace(/#/g, '')}</p>`;
+        } else if (type === 'user') {
+            div.className = "p-4 rounded-2xl max-w-[75%] mb-2 shadow-md bg-blue-600 text-white self-end ml-auto relative";
+            div.innerHTML = `<p class="leading-relaxed whitespace-pre-wrap font-medium">${text}</p><div class="absolute -right-1 bottom-4 w-3 h-3 bg-blue-600 transform rotate-45"></div>`;
+        } else {
+            div.className = "p-2 rounded max-w-full text-center mx-auto block mb-2";
+            div.innerHTML = `<span class="bg-gray-200/80 text-gray-600 text-xs px-3 py-1 font-bold uppercase tracking-wider rounded-full shadow-inner border border-gray-300/50">${text}</span>`;
+        }
+
+        transcriptArea.appendChild(div);
+        transcriptArea.scrollTop = transcriptArea.scrollHeight;
+    }
+
+    // Initial load
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (initialQuestion && initialQuestion.trim() !== '') {
+                speakText(initialQuestion);
+            }
+        }, 1000);
+    });
 </script>
 {% endblock %}

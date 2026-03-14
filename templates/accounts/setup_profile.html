@@ -1,142 +1,38 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<style>
-    .setup-container {
-        max-width: 600px;
-        margin: 40px auto;
-        background: var(--surface-color);
-        padding: 40px;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        border: 1px solid #E8EAED;
-        text-align: left;
-    }
-
-    .setup-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
-    .setup-header h2 {
-        font-size: 2rem;
-        color: var(--text-primary);
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .setup-header p {
-        color: var(--text-secondary);
-        font-size: 1rem;
-    }
-
-    .form-group {
-        margin-bottom: 24px;
-    }
-
-    label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: var(--text-primary);
-    }
-
-    input[type="text"],
-    select {
-        width: 100%;
-        padding: 14px 16px;
-        border: 1px solid #DADCE0;
-        border-radius: 12px;
-        font-size: 1rem;
-        color: var(--text-primary);
-        background: var(--surface-color);
-        transition: var(--transition);
-        outline: none;
-    }
-
-    input[type="text"]:focus,
-    select:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
-    }
-
-    /* File Upload Styling */
-    .file-upload-wrapper {
-        border: 2px dashed #DADCE0;
-        border-radius: 16px;
-        padding: 40px 20px;
-        text-align: center;
-        background: #F8F9FA;
-        cursor: pointer;
-        transition: var(--transition);
-        position: relative;
-    }
-
-    .file-upload-wrapper:hover {
-        border-color: var(--primary-color);
-        background: #F4F8FE;
-    }
-
-    .file-upload-wrapper i {
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 15px;
-    }
-
-    .file-upload-wrapper p {
-        color: var(--text-secondary);
-        margin-bottom: 10px;
-    }
-
-    .file-upload-wrapper input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-    }
-
-    .submit-btn {
-        width: 100%;
-        padding: 16px;
-        font-size: 1.1rem;
-        border-radius: var(--btn-radius);
-        margin-top: 10px;
-    }
-</style>
-
-<div class="setup-container">
-    <div class="setup-header">
-        <h2>Complete Your Profile</h2>
-        <p>Upload your resume so the AI can tailor your interview.</p>
+<div class="max-w-2xl w-full mx-auto mt-10 mb-20 bg-g-surface sm:p-10 p-6 sm:border border-g-border rounded-[28px] sm:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)]">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-g-text-primary mb-3">Complete Your Profile</h2>
+        <p class="text-g-text-secondary text-lg">Upload your resume to tailor your AI interviews.</p>
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-6">
         {% csrf_token %}
 
-        <div class="form-group" style="text-align: center;">
-            <div class="avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 15px auto;">
+        <div class="text-center mb-4">
+            <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-g-bg border-4 border-white shadow-sm flex items-center justify-center text-3xl text-g-blue overflow-hidden">
                 {% if user.socialaccount_set.all.0.get_avatar_url %}
-                    <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                    <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar" class="w-full h-full object-cover">
                 {% else %}
                     <i class="fa-regular fa-user"></i>
                 {% endif %}
             </div>
-            <h3 style="color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ user.email }}</p>
-        </div>
-        
-        <div class="form-group">
-            <label>Target Role</label>
-            <input type="text" name="target_role" placeholder="e.g. Backend Developer" required>
+            <h3 class="text-xl font-semibold text-g-text-primary">{{ user.get_full_name|default:user.username }}</h3>
+            <p class="text-g-text-secondary">{{ user.email }}</p>
         </div>
 
-        <div class="form-group">
-            <label>Experience Level</label>
-            <select name="experience_level" required>
-                <option value="" disabled selected>Select level</option>
+        <div>
+            <label class="block font-semibold text-g-text-primary mb-2">Target Role</label>
+            <input type="text" name="target_role" placeholder="e.g. Backend Developer" required 
+                   class="w-full p-4 border border-g-border rounded-xl text-g-text-primary focus:outline-none focus:border-g-blue focus:ring-4 focus:ring-blue-100 transition-all">
+        </div>
+
+        <div>
+            <label class="block font-semibold text-g-text-primary mb-2">Experience Level</label>
+            <select name="experience_level" required 
+                    class="w-full p-4 border border-g-border rounded-xl text-g-text-primary bg-white focus:outline-none focus:border-g-blue focus:ring-4 focus:ring-blue-100 transition-all appearance-none">
+                <option value="" disabled selected>Select your current level</option>
                 <option value="Intern">Intern / Student</option>
                 <option value="Junior">Junior (0-2 years)</option>
                 <option value="Mid">Mid-Level (2-5 years)</option>
@@ -144,24 +40,23 @@
             </select>
         </div>
 
-        <div class="form-group">
-            <label>Upload Resume (PDF)</label>
-            <div class="file-upload-wrapper" id="fileWrapper">
-                <i class="fa-regular fa-file-pdf"></i>
-                <p>Drag & Drop or Click to Browse</p>
-                <span id="fileName" style="font-size: 0.9rem; font-weight: 500; color: var(--text-primary);"></span>
-                <input type="file" name="resume" accept=".pdf" id="resumeInput" required>
+        <div>
+            <label class="block font-semibold text-g-text-primary mb-2">Upload Resume (PDF)</label>
+            <div id="fileWrapper" class="relative border-2 border-dashed border-g-border rounded-2xl p-10 text-center bg-gray-50 hover:bg-blue-50 hover:border-g-blue transition-colors cursor-pointer group">
+                <i class="fa-regular fa-file-pdf text-4xl text-g-blue mb-4 group-hover:scale-110 transition-transform"></i>
+                <p class="text-g-text-secondary mb-2 pointer-events-none">Drag & Drop or Click to Browse</p>
+                <span id="fileName" class="font-medium text-g-text-primary pointer-events-none"></span>
+                <input type="file" name="resume" accept=".pdf" id="resumeInput" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary submit-btn">
+        <button type="submit" class="w-full mt-4 bg-g-blue text-white py-4 rounded-full font-medium text-lg shadow-md hover:bg-g-blue-hover hover:-translate-y-0.5 transition-all">
             Save & Continue to Dashboard
         </button>
     </form>
 </div>
 
 <script>
-    // Simple script to show selected file name
     document.getElementById('resumeInput').addEventListener('change', function(e) {
         var fileName = e.target.files[0] ? e.target.files[0].name : '';
         document.getElementById('fileName').textContent = fileName;
