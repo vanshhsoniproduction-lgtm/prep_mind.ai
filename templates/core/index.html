@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load socialaccount %}
+
+{% block content %}
+<nav>
+    <a href="/" class="logo">
+        <i class="fa-solid fa-microphone-lines"></i> PrepMind AI
+    </a>
+    <div>
+        {% if user.is_authenticated %}
+            <a href="#" class="btn btn-primary">Go to Dashboard</a>
+        {% else %}
+            <!-- This triggers django-allauth Google OAuth -->
+            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-google">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
+                    Sign in with Google
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</nav>
+
+<main>
+    <h1>The ultimate <span class="blue">A</span><span class="red">I</span> <span class="yellow">I</span>nterviewer <span class="green">for real-world prep.</span></h1>
+    <p class="subtitle">Experience fully conversational, adaptive, and voice-interactive tech interviews. Get detailed feedback on communication and coding.</p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+        {% if user.is_authenticated %}
+            <a href="#" class="btn btn-primary" style="padding: 15px 32px; font-size: 1.1rem;">Start Mock Interview</a>
+        {% else %}
+            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" style="padding: 15px 32px; font-size: 1.1rem; gap: 15px;">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width: 24px; border-radius: 50%; background: white; padding: 2px;">
+                    Continue with Google
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Live Demo Visual -->
+    <div class="mockup-wrapper">
+        <div class="mockup-header">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+        </div>
+        <div class="mockup-content">
+            <div class="ai-block">
+                <div class="avatar ai-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="chat-bubble ai-bubble" style="font-weight: 500;">
+                    Hello! I'll be your interviewer today. I see you built a Django API. Can you explain your database choice?
+                </div>
+            </div>
+            <div class="user-block">
+                <div class="avatar"><i class="fa-regular fa-user"></i></div>
+                <div class="chat-bubble">
+                    Yes, I chose PostgreSQL for its robust JSON support and ACID compliance for our order system.
+                </div>
+            </div>
+            <div class="ai-block">
+                <div class="avatar ai-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="chat-bubble ai-bubble">
+                    Great. How did you optimize query performance for large read volumes?
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fa-solid fa-microphone-alt"></i>
+            </div>
+            <h3>Full Voice Interaction</h3>
+            <p>Speak naturally just like a real interview. PrepMind listens, analyzes, and responds.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fa-solid fa-code"></i>
+            </div>
+            <h3>Built-in Coding</h3>
+            <p>Seamlessly transition from system design discussion to live coding algorithms.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <h3>Smart Analytics</h3>
+            <p>Get a granular breakdown of your confidence, filler word usage, and technical accuracy.</p>
+        </div>
+    </div>
+</main>
+{% endblock %}

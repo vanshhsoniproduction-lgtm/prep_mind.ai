@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Dashboard Specific Styles */
+    body {
+        background-color: var(--bg-color); /* #F8F9FA */
+    }
+
+    /* Top Navigation specific for Dashboard */
+    .dash-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2.5rem;
+        background: var(--surface-color);
+        border-bottom: 1px solid #E8EAED;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .dash-logo {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dash-logo i { color: var(--primary-color); }
+
+    /* Profile Dropdown */
+    .profile-wrap {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 16px 6px 6px;
+        border-radius: 30px;
+        border: 1px solid transparent;
+        transition: var(--transition);
+        background: transparent;
+    }
+
+    .profile-trigger:hover {
+        background: #F1F3F4;
+        border-color: #E8EAED;
+    }
+
+    .mini-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .mini-avatar img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .profile-name {
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    /* Dropdown Menu */
+    .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: var(--surface-color);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid #E8EAED;
+        border-radius: 16px;
+        width: 280px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: var(--transition);
+        overflow: hidden;
+    }
+
+    .profile-wrap.active .profile-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .dropdown-header {
+        padding: 20px;
+        border-bottom: 1px solid #E8EAED;
+        text-align: center;
+    }
+
+    .dropdown-header .avatar-large {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 10px;
+    }
+
+    .dropdown-email {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+    
+    .dropdown-role {
+        display: inline-block;
+        background: #E8F0FE;
+        color: var(--primary-color);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .dropdown-body {
+        padding: 10px 0;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: background 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .dropdown-item i {
+        color: var(--text-secondary);
+        width: 20px;
+        text-align: center;
+    }
+
+    .dropdown-item:hover {
+        background: #F8F9FA;
+    }
+
+    .dropdown-item.logout {
+        color: var(--google-red);
+        border-top: 1px solid #E8EAED;
+        margin-top: 5px;
+    }
+    .dropdown-item.logout i {
+        color: var(--google-red);
+    }
+
+    /* Main Dashboard Layout */
+    .dash-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 2.5rem;
+        width: 100%;
+    }
+
+    .welcome-header {
+        margin-bottom: 2rem;
+    }
+
+    .welcome-header h1 {
+        font-size: 2rem;
+        text-align: left;
+        margin-bottom: 8px;
+    }
+
+    .welcome-header p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    /* Grid layout */
+    .dash-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
+
+    .dash-card {
+        background: var(--surface-color);
+        border-radius: 24px;
+        padding: 30px;
+        border: 1px solid #E8EAED;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+
+    .card-header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-primary);
+    }
+
+    /* Empty states */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #DADCE0;
+        margin-bottom: 15px;
+    }
+
+    .btn-create {
+        margin-top: 20px;
+        font-size: 0.95rem;
+        padding: 10px 24px;
+    }
+</style>
+
+<!-- Custom Navbar for Dashboard -->
+<nav class="dash-nav">
+    <a href="{% url 'core:dashboard' %}" class="dash-logo">
+        <i class="fa-solid fa-microphone-lines"></i> PrepMind
+    </a>
+
+    <div class="profile-wrap" id="profileDropdownBtn">
+        <div class="profile-trigger">
+            <div class="mini-avatar">
+                {% if user.socialaccount_set.all.0.get_avatar_url %}
+                    <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                {% else %}
+                    {{ user.first_name|first|default:user.username|first|upper }}
+                {% endif %}
+            </div>
+            <span class="profile-name">{{ user.first_name|default:"Profile" }}</span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem; color: var(--text-secondary);"></i>
+        </div>
+
+        <div class="profile-dropdown" id="dropdownMenu">
+            <div class="dropdown-header">
+                <div class="mini-avatar avatar-large">
+                    {% if user.socialaccount_set.all.0.get_avatar_url %}
+                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                    {% else %}
+                        {{ user.first_name|first|default:user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <h3 style="font-size: 1.1rem; color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</h3>
+                <div class="dropdown-email">{{ user.email }}</div>
+                {% if user.target_role %}
+                    <div class="dropdown-role">{{ user.experience_level }} {{ user.target_role }}</div>
+                {% endif %}
+            </div>
+            <div class="dropdown-body">
+                <a href="{% url 'accounts:setup_profile' %}" class="dropdown-item">
+                    <i class="fa-solid fa-user-pen"></i> Update Profile / Resume
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fa-solid fa-chart-line"></i> My Analytics
+                </a>
+                <a href="#" class="dropdown-item">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Interview History
+                </a>
+                
+                <!-- Logout requires a POST request in Django Allauth -->
+                <form action="{% url 'account_logout' %}" method="post" style="display: block;">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item logout" style="width: 100%; border:none; background:none; text-align: left; cursor: pointer;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign out
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="dash-container">
+    <div class="welcome-header">
+        <h1 style="color: var(--text-primary);">Welcome back, {{ user.first_name|default:user.username }} 👋</h1>
+        <p>Ready for your next mock interview?</p>
+    </div>
+
+    <div class="dash-grid">
+        <!-- Main Column -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="dash-card">
+                <div class="card-header"><i class="fa-solid fa-play" style="color: var(--primary-color);"></i> Start New Interview</div>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Simulate a realistic conversational interview based on your {{ user.target_role }} profile.
+                </p>
+                <div style="display: flex; gap: 15px;">
+                    <form method="POST" action="{% url 'interviews:start' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 24px;">
+                            <i class="fa-solid fa-microphone"></i> Start Voice Interview
+                        </button>
+                    </form>
+                    <button class="btn btn-google" style="padding: 12px 24px;">
+                        Configure Settings
+                    </button>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="card-header"><i class="fa-solid fa-clock-rotate-left" style="color: var(--google-yellow);"></i> Recent Activity</div>
+                <div class="empty-state">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <p>You haven't completed any interviews yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="dash-card" style="padding: 24px;">
+                <div class="card-header" style="font-size: 1rem;"><i class="fa-solid fa-bullseye" style="color: var(--google-red);"></i> Preparation Focus</div>
+                <div style="background: #F8F9FA; padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 5px;">Target Role</div>
+                    <div style="font-weight: 500; color: var(--text-primary);">{{ user.target_role|default:"Not set" }}</div>
+                </div>
+                <div style="background: #F8F9FA; padding: 15px; border-radius: 12px;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 5px;">Resume Status</div>
+                    {% if user.resume %}
+                        <div style="font-weight: 500; color: var(--google-green); display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-circle-check"></i> Uploaded
+                        </div>
+                    {% else %}
+                        <div style="font-weight: 500; color: var(--google-red); display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Missing
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dash-card" style="padding: 24px; background: linear-gradient(145deg, var(--primary-color), #0D47A1); color: white; border: none;">
+                <div class="card-header" style="font-size: 1rem; color: white;"><i class="fa-solid fa-bolt" style="color: #FBBC05;"></i> Weekly Goal</div>
+                <h2 style="font-size: 2.5rem; margin-bottom: 5px;">0/3</h2>
+                <p style="opacity: 0.9; font-size: 0.9rem;">Interviews completed this week.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple dropdown toggle logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const mainNavContainer = document.querySelector('nav:not(.dash-nav)');
+        
+        // Hide the main index.html big navbar if we are on dashboard
+        if(mainNavContainer) {
+            mainNavContainer.style.display = 'none';
+        }
+
+        profileBtn.addEventListener('click', function(e) {
+            this.classList.toggle('active');
+            e.stopPropagation();
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!profileBtn.contains(e.target)) {
+                profileBtn.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}
