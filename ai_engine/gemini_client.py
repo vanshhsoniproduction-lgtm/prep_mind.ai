@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import time
@@ -5,10 +6,16 @@ from typing import Any, Dict, Optional
 
 from django.conf import settings
 from google import genai
+from google.genai import types
 
 LOGGER = logging.getLogger(__name__)
-MODEL_NAME = "models/gemini-3-flash-preview"
-RATE_LIMIT_DELAY = 5
+MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.5-flash",
+    "gemini-3-flash-preview",
+    "gemini-1.5-flash"
+]
+RATE_LIMIT_DELAY = 2
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
@@ -38,47 +45,41 @@ def _extract_usage(response: Any) -> Optional[Dict[str, Any]]:
 
 
 def generate_content(prompt: str, response_schema: Optional[str] = None, fallback_text: Optional[str] = None) -> Dict[str, Any]:
-    attempts = 0
-    config: Dict[str, Any] = {}
+    config = None
     if response_schema:
-        config["response_mime_type"] = "application/json"
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
 
-    while attempts < 2:
+    for model_name in MODELS:
         try:
-            attempts += 1
-            LOGGER.info("[GEMINI] model=%s attempt=%s", MODEL_NAME, attempts)
+            LOGGER.info("[GEMINI] trying model=%s", model_name)
             start_time = time.time()
             response = client.models.generate_content(
-                model=MODEL_NAME,
+                model=model_name,
                 contents=prompt,
                 config=config,
             )
             elapsed = round(time.time() - start_time, 2)
             usage = _extract_usage(response)
             text = (getattr(response, "text", "") or "").strip()
-            LOGGER.info("[GEMINI] success model=%s elapsed=%.2fs usage=%s", MODEL_NAME, elapsed, usage)
+            LOGGER.info("[GEMINI] success model=%s elapsed=%.2fs", model_name, elapsed)
             return {"text": text, "status": "success", "usage": usage}
         except Exception as exc:  # noqa: BLE001
             is_rate_limit = _is_rate_limit_error(exc)
             LOGGER.error(
-                "[GEMINI] error model=%s attempt=%s rate_limited=%s error=%s",
-                MODEL_NAME,
-                attempts,
+                "[GEMINI] error model=%s rate_limited=%s error=%s",
+                model_name,
                 is_rate_limit,
-                str(exc)[:500],
+                str(exc)[:200],
             )
-            if is_rate_limit and attempts < 2:
-                LOGGER.warning(
-                    "[GEMINI] rate_limit model=%s retry_in=%ss", MODEL_NAME, RATE_LIMIT_DELAY
-                )
-                time.sleep(RATE_LIMIT_DELAY)
-                continue
-            break
+            # If it's a rate limit or another error, we just continue to the next model in the list
+            continue
 
     fallback = fallback_text or (
         "I'm sorry, let's continue the interview. Could you elaborate more on your previous answer?"
     )
-    LOGGER.warning("[GEMINI] fallback triggered model=%s", MODEL_NAME)
+    LOGGER.warning("[GEMINI] ALL MODELS FAILED. fallback triggered")
     return {"text": fallback, "status": "fallback", "usage": None}
 
 

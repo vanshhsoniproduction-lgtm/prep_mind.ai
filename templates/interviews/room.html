@@ -1,112 +1,299 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Navbar area minimal -->
-<div class="h-16 border-b border-g-border bg-g-surface flex items-center justify-between px-6 shrink-0 shadow-sm relative z-50">
-    <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded bg-blue-500 text-white flex items-center justify-center font-bold shadow-md">P</div>
-        <h1 class="text-xl font-bold font-outfit tracking-tight text-gray-800">Prep<span class="text-blue-500">Mind</span>.ai</h1>
-    </div>
-    <div class="flex items-center gap-4">
-        <span class="text-sm font-semibold px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100 shadow-inner">Live Session</span>
-        <button id="endSessionBtn" class="px-5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-medium text-sm transition-all shadow-sm">
-            End Session
-        </button>
-    </div>
-</div>
+<style>
+    body {
+        background-color: #202124 !important;
+        color: white !important;
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    nav { display: none !important; }
 
-<div class="flex-1 flex overflow-hidden">
+    .meet-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .meet-main {
+        flex: 1;
+        display: flex;
+        padding: 16px;
+        gap: 16px;
+        height: calc(100vh - 80px);
+    }
+
+    .video-section {
+        flex: 1;
+        background: #3c4043;
+        border-radius: 8px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    #userVideo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+    }
+
+    .ai-overlay {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.6);
+        padding: 12px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .ai-orb {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #8ab4f8;
+        box-shadow: 0 0 15px rgba(138, 180, 248, 0.5);
+    }
+
+    .ai-orb.speaking {
+        animation: pulse 1s infinite alternate;
+        background: #34A853;
+        box-shadow: 0 0 30px rgba(52, 168, 83, 0.8);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 10px rgba(52, 168, 83, 0.5); }
+        100% { transform: scale(1.1); box-shadow: 0 0 30px rgba(52, 168, 83, 0.9); }
+    }
+
+    .ai-subtitle-container {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        z-index: 20;
+    }
+
+    #aiSubtitle {
+        background: rgba(0,0,0,0.7);
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        display: inline-block;
+        max-width: 80%;
+    }
+
+    .code-section {
+        width: 45%;
+        background: #282c34;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #5f6368;
+    }
+
+    .code-header {
+        background: #1e1e1e;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #3c4043;
+    }
+
+    .controls-bar {
+        height: 80px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+    }
+
+    .center-controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .control-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #3c4043;
+        color: white;
+        border: 1px solid #5f6368;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: all 0.2s;
+    }
+
+    .control-btn:hover { background: #4a4d51; }
+    .control-btn.active-recording { background: #8ab4f8; color: #202124; }
+    .control-btn.off { background: #ea4335; color: white; border-color: #ea4335; }
+    .end-btn { background: #ea4335; width: 70px; border-radius: 25px; border-color: #ea4335; }
+    .end-btn:hover { background: #d93025; }
     
-    <!-- LEFT PANE: Interviewer AI & Chat -->
-    <div id="interviewPane" class="flex-1 flex flex-col bg-gray-50 relative transition-all duration-300">
-        
-        <!-- AI Video / Visualizer -->
-        <div class="h-[45%] bg-slate-900 border-b-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden group p-6 shadow-md z-10 w-full">
-            
-            <!-- Pulsing AI Avatar -->
-            <div id="aiAvatar" class="w-32 h-32 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.5)] transition-transform duration-300 relative z-10 border-4 border-blue-400/30">
-                <i class="fas fa-robot text-4xl text-white"></i>
+    .mic-recording {
+        background-color: #ef4444 !important;
+        animation: pulse-red 1.5s infinite;
+    }
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+</style>
+
+<div class="meet-container">
+    <div class="meet-main">
+        <!-- Video Left -->
+        <div class="video-section">
+            <div class="ai-overlay">
+                <div class="ai-orb" id="aiAvatar"></div>
+                <span style="font-weight: 500;" id="systemStatus">Ready when you are.</span>
             </div>
             
-            <!-- Audio Waves (CSS Animations) -->
-            <div class="mt-8 flex gap-2 h-8 items-center transition-opacity duration-300" id="audioWaves" style="opacity: 0;">
-                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
-                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1.2s_ease-in-out_infinite_0.2s]"></div>
-                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_0.8s_ease-in-out_infinite_0.4s]"></div>
-                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_1.1s_ease-in-out_infinite_0.1s]"></div>
-                <div class="w-1.5 bg-blue-400 rounded-full animate-[wave_0.9s_ease-in-out_infinite_0.3s]"></div>
+            <video id="userVideo" autoplay playsinline muted></video>
+            
+            <div id="cameraOffIndicator" style="display:none; position:absolute; font-size: 3rem; color: #9aa0a6;">
+                <i class="fas fa-video-slash"></i>
             </div>
 
-            <div class="absolute bottom-8 left-0 right-0 text-center px-8 z-20">
-                <p id="aiSubtitle" class="text-lg text-blue-50 font-medium bg-black/60 inline-block px-5 py-2.5 rounded-xl backdrop-blur-md max-w-2xl mx-auto shadow-2xl leading-relaxed border border-white/10">
-                    Connecting to AI Interviewer...
-                </p>
+            <div class="ai-subtitle-container">
+                <div id="aiSubtitle">Connecting to AI Interviewer...</div>
             </div>
             
-            <!-- Particles/Glow in Background -->
-            <div class="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent pointer-events-none"></div>
+            <!-- Hidden Audio Waves and Transcript Area as requested by script -->
+            <div id="audioWaves" style="display:none; opacity:0;"></div>
+            <div id="transcriptArea" style="display:none;"></div>
         </div>
 
-        <!-- Transcript / Activity -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-gray-50" id="transcriptArea">
-            <div class="flex justify-center my-2">
-                <div class="bg-gray-200/80 text-gray-500 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner border border-gray-300/50">Session Started</div>
+        <!-- Code Editor Right -->
+        <div class="code-section" id="codePane">
+            <div class="code-header">
+                <div style="font-weight: 600; color: #e8eaed; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-code"></i> Workspace
+                </div>
+                <select id="languageSelect" style="background: #3c4043; color: white; border: none; padding: 6px 12px; border-radius: 6px; outline:none;">
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                </select>
             </div>
-        </div>
+            
+            <div style="padding: 12px 16px; background: #202124; border-bottom: 1px solid #3c4043; font-size: 0.9rem; flex: 0 0 35%; overflow-y:auto; color: #bdc1c6; display: flex; flex-direction: column;">
+                <strong style="color:#8ab4f8;">Problem:</strong> 
+                <span id="problemText">Loading problem...</span>
+            </div>
 
-        <!-- Controls -->
-        <div class="bg-white border-t border-gray-200 p-6 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] z-10 flex flex-col items-center">
-            
-            <p id="systemStatus" class="text-sm text-gray-500 mb-3 font-medium">Ready when you are.</p>
-            
-            <div class="flex items-center gap-4">
-                <button id="micBtn" class="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-[0_5px_15px_rgba(37,99,235,0.4)] hover:shadow-[0_8px_25px_rgba(37,99,235,0.5)] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 transform hover:-translate-y-1">
-                    <i class="fas fa-microphone text-2xl"></i>
+            <div id="editor" style="flex: 1; width: 100%;"></div>
+
+            <div style="padding: 12px 16px; background: #1e1e1e; border-top: 1px solid #3c4043; display: flex; justify-content: flex-end;">
+                <button id="submitCodeBtn" style="background: #8ab4f8; color: #202124; font-weight: 600; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+                    <i class="fas fa-play"></i> Run & Submit
                 </button>
             </div>
-            <p class="text-xs text-gray-400 mt-3 font-semibold uppercase tracking-wider">Push to Talk</p>
         </div>
     </div>
 
-    <!-- RIGHT PANE: Code Editor (Hidden by default unless coding) -->
-    <div id="codePane" class="w-1/2 border-l-2 border-gray-200 bg-white flex flex-col hidden transition-all duration-300 shadow-2xl z-20">
-        <div class="bg-slate-800 text-white px-5 py-3.5 flex items-center justify-between shadow-md z-10">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-laptop-code text-blue-400 text-lg"></i>
-                <h3 class="font-semibold tracking-wide">Coding Workspace</h3>
-            </div>
-            <select id="languageSelect" class="bg-slate-700 border border-slate-600 text-white text-sm rounded-lg px-4 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer hover:bg-slate-600 transition-colors">
-                <option value="javascript">JavaScript</option>
-                <option value="python">Python</option>
-                <option value="java">Java</option>
-                <option value="cpp">C++</option>
-            </select>
-        </div>
+    <!-- Bottom Controls -->
+    <div class="controls-bar">
+        <div style="color: white; font-weight: 500; font-size:1.1rem;" id="timeDisplay">00:00</div>
         
-        <!-- Problem Statement Area -->
-        <div class="p-6 bg-blue-50/50 border-b border-gray-200 max-h-56 overflow-y-auto shrink-0 shadow-sm z-10 relative">
-            <h4 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-tasks"></i> Problem Statement</h4>
-            <div id="problemText" class="text-sm text-gray-800 font-medium leading-relaxed bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
-                Loading problem...
-            </div>
+        <div class="center-controls">
+            <button class="control-btn" id="micBtn" title="Toggle Microphone">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button class="control-btn" id="cameraBtn" title="Toggle Camera">
+                <i class="fas fa-video"></i>
+            </button>
+            <button class="control-btn end-btn" id="endSessionBtn" title="Leave call">
+                <i class="fas fa-phone-slash"></i>
+            </button>
         </div>
 
-        <div id="editor" class="flex-1 w-full bg-white relative"></div>
-        
-        <div class="bg-white border-t border-gray-200 p-5 shrink-0 flex justify-between items-center shadow-[0_-5px_15px_rgba(0,0,0,0.03)] z-10 relative">
-            <span class="text-xs text-slate-500 font-semibold flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-md">
-                <i class="fas fa-bolt text-amber-500"></i> Code is evaluated automatically
-            </span>
-            <button id="submitCodeBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
-                <i class="fas fa-play"></i> Run & Submit
-            </button>
+        <div style="color: #9aa0a6; font-size: 0.9rem;">
+            PrepMind.ai
         </div>
     </div>
 </div>
 
-<!-- RequireJS for Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
 <script>
+    // === NEW CAMERA JS ===
+    const userVideo = document.getElementById('userVideo');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const cameraOffIndicator = document.getElementById('cameraOffIndicator');
+    let videoStream = null;
+    let cameraOn = true;
+
+    async function initCamera() {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            userVideo.srcObject = videoStream;
+        } catch(err) {
+            console.error("Camera error:", err);
+            toggleCameraUI(false);
+        }
+    }
+
+    function toggleCameraUI(isOn) {
+        cameraOn = isOn;
+        if(isOn) {
+            cameraBtn.classList.remove('off');
+            cameraBtn.innerHTML = '<i class="fas fa-video"></i>';
+            userVideo.style.display = 'block';
+            cameraOffIndicator.style.display = 'none';
+        } else {
+            cameraBtn.classList.add('off');
+            cameraBtn.innerHTML = '<i class="fas fa-video-slash"></i>';
+            userVideo.style.display = 'none';
+            cameraOffIndicator.style.display = 'block';
+        }
+    }
+
+    cameraBtn.addEventListener('click', () => {
+        if(videoStream) {
+            const tracks = videoStream.getVideoTracks();
+            tracks.forEach(t => t.enabled = !t.enabled);
+            toggleCameraUI(!cameraOn);
+        } else {
+            initCamera();
+        }
+    });
+
+    initCamera();
+
+    // Clock
+    let seconds = 0;
+    setInterval(() => {
+        seconds++;
+        const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        document.getElementById('timeDisplay').innerText = `${mins}:${secs}`;
+    }, 1000);
+
+    // Mock transcript function
+    function addTranscriptMessage() {}
+
     // --- Configuration ---
     const sessionId = "{{ session.id }}";
     const initialQuestion = "{{ first_question_text|escapejs }}";
@@ -150,7 +337,7 @@
         editor = monaco.editor.create(document.getElementById('editor'), {
             value: '// Write your code here...\n',
             language: 'javascript',
-            theme: 'vs-light',
+            theme: 'vs-dark',
             minimap: { enabled: false },
             fontSize: 14,
             padding: { top: 20 },
@@ -194,20 +381,20 @@
             utterance.pitch = 1.1;
 
             utterance.onstart = () => {
-                aiAvatar.classList.add('scale-110', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
+                aiAvatar.classList.add('speaking', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
                 audioWaves.style.opacity = '1';
                 addTranscriptMessage("Interviewer", displayClean, "ai");
             };
             
             utterance.onend = () => {
-                aiAvatar.classList.remove('scale-110', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
+                aiAvatar.classList.remove('speaking', 'border-blue-300', 'shadow-[0_0_80px_rgba(37,99,235,0.7)]');
                 audioWaves.style.opacity = '0';
                 currentlySpeaking = false;
                 resolve();
             };
             
             utterance.onerror = () => {
-                aiAvatar.classList.remove('scale-110', 'border-blue-300');
+                aiAvatar.classList.remove('speaking', 'border-blue-300');
                 audioWaves.style.opacity = '0';
                 currentlySpeaking = false;
                 resolve();
@@ -405,5 +592,6 @@
             }
         }, 1000);
     });
+
 </script>
 {% endblock %}

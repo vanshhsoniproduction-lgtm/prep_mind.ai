@@ -65,13 +65,9 @@ def room(request, session_id):
     session = InterviewSession.objects.get(id=session_id, user=request.user)
     first_q = session.questions.order_by('order').first()
 
-    first_text = first_q.question_text if first_q else 'Hello, are you ready to begin?'
-    first_audio_url = ""
-
     context = {
         'session': session,
-        'first_question_text': first_text,
-        'first_audio_url': first_audio_url,
+        'first_question_text': first_q.question_text if first_q else 'Hello, are you ready to begin?'
     }
     return render(request, 'interviews/room.html', context)
 
@@ -132,16 +128,13 @@ def handle_response(request, session_id):
             session.feedback_text = feedback_data.get('detailed_feedback', '')
             session.end_time = timezone.now()
             session.save()
-            
-            end_text = feedback_data.get('spoken_text', 'Thank you!')
-            response_data = {
+            return JsonResponse({
                 'success': True,
                 'status': 'success',
-                'ai_text': end_text,
+                'ai_text': feedback_data.get('spoken_text', 'Thank you!'),
                 'is_ended': True,
                 'redirect_url': reverse('core:dashboard'),
-            }
-            return JsonResponse(response_data)
+            })
 
         exp_level = request.user.experience_level or 'Mid-Level'
         interaction = generate_next_interaction(
@@ -167,7 +160,6 @@ def handle_response(request, session_id):
             'type': interaction.get('type'),
             'is_ended': False,
         }
-        
         if interaction.get('type') == 'coding':
             response_data['problem'] = interaction.get('problem')
             response_data['language'] = interaction.get('language')
@@ -255,17 +247,13 @@ def evaluate_coding_round(request, session_id):
             is_coding=False,
             order=session.question_count
         )
-        
-        ai_response_text = feedback_speech + ' ' + interaction.get('text', '')
-        response_data = {
+        return JsonResponse({
             'success': True,
             'status': interaction.get('status', 'success'),
-            'ai_text': ai_response_text,
+            'ai_text': feedback_speech + ' ' + interaction.get('text', ''),
             'type': 'text',
             'is_ended': False
-        }
-        
-        return JsonResponse(response_data)
+        })
     except Exception as e:  # noqa: BLE001
         LOGGER.error("[INTERVIEW] evaluate_coding_round fallback error=%s", str(e)[:500])
         return JsonResponse({

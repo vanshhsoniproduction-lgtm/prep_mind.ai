@@ -1,21 +1,25 @@
 import json
 from google import genai
+from google.genai import types
 from django.conf import settings
 import time
+import os
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
-MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash']
+MODELS = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash']
 
 def _call_gemini(prompt, response_schema=None):
     last_error = None
     for model_name in MODELS:
         try:
-            print(f"\n{'='*60}\n[GEMINI] ? Calling model: {model_name}\n[GEMINI] ?? Prompt:\n{prompt.strip()[:300]}...\n")
+            print(f"\n{'='*60}\n[GEMINI] 🤖 Calling model: {model_name}\n[GEMINI] 📝 Prompt:\n{prompt.strip()[:300]}...\n")
             start_time = time.time()
 
-            config = {}
+            config = None
             if response_schema:
-                config['response_mime_type'] = 'application/json'
+                config = types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
 
             response = client.models.generate_content(
                 model=model_name,
