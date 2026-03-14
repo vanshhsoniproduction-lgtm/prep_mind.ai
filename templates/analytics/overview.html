@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+.pm-shell { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.pm-page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+.pm-kicker { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--pm-primary); letter-spacing: 0.5px; margin-bottom: 8px; }
+.pm-page-header h1 { font-size: 32px; font-weight: 700; color: var(--pm-text); margin-bottom: 8px; }
+.pm-subtle { color: var(--pm-text-secondary); font-size: 15px; }
+
+.pm-grid { display: grid; gap: 24px; margin-bottom: 24px; }
+.pm-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.pm-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+.pm-card { background: var(--pm-surface); border: 1px solid var(--pm-border-light); border-radius: var(--pm-radius-lg); padding: 24px; box-shadow: var(--pm-shadow-sm); }
+.pm-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--pm-text); }
+.pm-card.stat h2 { font-size: 36px; font-weight: 700; color: var(--pm-text); margin-top: 4px; }
+.pm-card.stat .pm-subtle { margin-bottom: 2px; }
+
+.pm-table { padding: 0; overflow: hidden; }
+.pm-table-head { padding: 16px 24px; border-bottom: 1px solid var(--pm-border-light); background: var(--pm-bg); font-weight: 600; font-size: 14px; text-transform: uppercase; color: var(--pm-text-secondary); letter-spacing: 0.5px; }
+.pm-table-body { display: flex; flex-direction: column; }
+.pm-row { transition: background 0.2s; }
+.pm-row:hover { background: var(--pm-bg); }
+.pm-empty { text-align: center; color: var(--pm-text-disabled); font-size: 15px; }
+
+@media (max-width: 768px) {
+  .pm-grid-2, .pm-grid-3 { grid-template-columns: 1fr; }
+  .pm-row { flex-direction: column; gap: 12px; }
+  .pm-row .scores { justify-content: space-between; width: 100%; }
+}
+{% endblock %}
+
+{% block content %}
+<section class="pm-shell">
+  <div class="pm-page-header">
+    <div>
+      <p class="pm-kicker">Analytics</p>
+      <h1>Interview Performance Dashboard</h1>
+      <p class="pm-subtle">Track your overall scores across all interviews and drill into each session.</p>
+    </div>
+  </div>
+
+  <div class="pm-grid pm-grid-2">
+      <div class="pm-card stat">
+          <h3>Overall Performance</h3>
+          <div style="display:flex; justify-content: space-around;text-align:center; padding: 20px 0;">
+              <div><p class="pm-subtle">Total</p><h2>{{ total_sessions }}</h2></div>
+              <div><p class="pm-subtle">Avg Tech</p><h2>{{ avg_tech }}</h2></div>
+              <div><p class="pm-subtle">Avg Comm</p><h2>{{ avg_comm }}</h2></div>
+              <div><p class="pm-subtle">Avg Conf</p><h2>{{ avg_conf }}</h2></div>
+          </div>
+      </div>
+      <div class="pm-card stat" style="display:flex; flex-direction:column; align-items:center;">
+          <h3>Overall Skills Graph</h3>
+          <div style="width: 100%; max-width: 300px;">
+              <canvas id="overallRadarChart"></canvas>
+          </div>
+      </div>
+  </div>
+
+  <div class="pm-card pm-table" style="margin-top:24px;">
+    <div class="pm-table-head">
+      <p>Interview History</p>
+    </div>
+    <div class="pm-table-body">
+      {% for s in sessions %}
+        <a class="pm-row" href="{% url 'analytics:session_detail' s.id %}" style="text-decoration: none; color: inherit; display:flex; justify-content:space-between; padding: 16px; border-bottom: 1px solid var(--pm-border-light);">
+          <div>
+            <p class="title" style="font-weight: 500;">{{ s.role }}</p>
+            <p class="meta" style="color:var(--pm-text-secondary); font-size:13px;">{{ s.start_time|date:"M d, Y" }}</p>
+          </div>
+          <div class="scores" style="display:flex; gap: 16px; align-items:center; font-weight: 500;">
+            <span><span style="color:var(--pm-text-secondary);font-size:12px;">Tech</span> {{ s.technical_score|default:'-' }}</span>
+            <span><span style="color:var(--pm-text-secondary);font-size:12px;">Comm</span> {{ s.communication_score|default:'-' }}</span>
+            <span><span style="color:var(--pm-text-secondary);font-size:12px;">Conf</span> {{ s.confidence_score|default:'-' }}</span>
+            <span class="material-symbols-rounded" style="color:var(--pm-primary);">arrow_forward_ios</span>
+          </div>
+        </a>
+      {% empty %}
+        <p class="pm-empty" style="padding: 24px;">No interviews yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ avg_skills|json_script:"avgSkillsData" }}
+<script>
+const skillsData = JSON.parse(document.getElementById('avgSkillsData').textContent);
+
+function renderOverallRadar() {
+  const ctx = document.getElementById('overallRadarChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: Object.keys(skillsData),
+      datasets: [{
+        label: 'Average Score',
+        data: Object.values(skillsData),
+        backgroundColor: 'rgba(26,115,232,0.15)',
+        borderColor: '#1a73e8',
+        pointBackgroundColor: '#1a73e8',
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { suggestedMin: 0, suggestedMax: 100 } },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+renderOverallRadar();
+</script>
+{% endblock %}

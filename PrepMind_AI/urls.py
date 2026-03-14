@@ -12,5 +12,6 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('user/', include('accounts.urls')),
     path('interviews/', include('interviews.urls')),
+    path('analytics/', include('analytics.urls')),
     path('', include('core.urls')),
 ]

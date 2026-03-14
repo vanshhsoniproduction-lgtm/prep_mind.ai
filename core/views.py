@@ -14,3 +14,8 @@ def dashboard(request):
         'recent_interviews': recent_interviews,
     }
     return render(request, 'core/dashboard.html', context)
+
+
+@login_required
+def dashboard_redirect(request):
+    return redirect('core:dashboard')

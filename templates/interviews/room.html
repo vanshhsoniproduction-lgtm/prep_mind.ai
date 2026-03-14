@@ -315,7 +315,7 @@
                 
                 speakText(data.ai_text).then(() => {
                     if (data.is_ended) {
-                        window.location.href = '/core/dashboard/';
+                        window.location.href = data.redirect_url || '/dashboard/';
                     }
                 });
             }
@@ -329,7 +329,7 @@
     
     endSessionBtn.addEventListener('click', () => {
        if(confirm('Are you sure you want to end this interview?')) {
-           window.location.href = '/core/dashboard/'; 
+           window.location.href = '/analytics/'; 
        }
     });
 
@@ -350,7 +350,7 @@
             if (data.is_ended) {
                 speakText(data.ai_text).then(() => {
                     alert("Interview Concluded. Redirecting to Dashboard.");
-                    window.location.href = '/core/dashboard/';
+                    window.location.href = data.redirect_url || '/dashboard/';
                 });
                 return;
             }

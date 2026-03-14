@@ -1,269 +1,315 @@
 {% extends 'base.html' %}
 
+{% block extra_css %}
+.dash-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+.dash-welcome h1 { font-size: 32px; font-weight: 600; margin-bottom: 6px; }
+.dash-welcome p { color: var(--pm-text-secondary); font-size: 16px; }
+.start-card {
+    background: var(--pm-primary-light); border: 1px dashed var(--pm-primary-surface);
+    border-radius: var(--pm-radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 16px;
+}
+.start-card .start-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; }
+.start-card .start-title .material-symbols-rounded { color: var(--pm-primary); }
+.start-card p { color: var(--pm-text-secondary); line-height: 1.7; max-width: 600px; }
+.start-actions { display: flex; gap: 10px; margin-top: 4px; }
+.interview-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-radius: var(--pm-radius-md);
+    border: 1px solid var(--pm-border-light); background: var(--pm-surface);
+    transition: all var(--pm-transition); cursor: pointer;
+}
+.interview-item:hover { box-shadow: var(--pm-shadow-sm); border-color: var(--pm-primary-surface); }
+.interview-left { display: flex; align-items: center; gap: 14px; }
+.interview-icon {
+    width: 44px; height: 44px; border-radius: var(--pm-radius-md);
+    background: var(--pm-primary-light); color: var(--pm-primary);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.interview-meta h4 { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+.interview-meta p { font-size: 12px; color: var(--pm-text-secondary); display: flex; align-items: center; gap: 6px; }
+.interview-scores { display: flex; gap: 8px; }
+.score-badge {
+    display: flex; flex-direction: column; align-items: center; padding: 6px 10px;
+    border-radius: var(--pm-radius-sm); background: var(--pm-bg); min-width: 54px;
+    border: 1px solid var(--pm-border-light);
+}
+.score-badge .label { font-size: 9px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; color: var(--pm-text-disabled); }
+.score-badge .value { font-size: 18px; font-weight: 600; }
+.score-badge .value.blue { color: var(--pm-primary); }
+.score-badge .value.green { color: var(--pm-green); }
+.score-badge .value.purple { color: #7c3aed; }
+.feedback-box {
+    margin-top: 12px; padding: 14px 16px; background: var(--pm-bg);
+    border-radius: var(--pm-radius-sm); border: 1px solid var(--pm-border-light);
+}
+.feedback-box h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); margin-bottom: 6px; font-weight: 600; }
+.feedback-box p { font-size: 13px; color: var(--pm-text-secondary); line-height: 1.6; }
+.sidebar-card { display: flex; flex-direction: column; gap: 18px; }
+.sidebar-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); font-weight: 600; margin-bottom: 4px; }
+.sidebar-field .val { font-size: 15px; font-weight: 500; color: var(--pm-text); }
+.sidebar-field .val.success { color: var(--pm-green); }
+.sidebar-field .val.error { color: var(--pm-red); }
+.progress-bar-bg { height: 6px; background: var(--pm-border-light); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress-bar-fill { height: 100%; background: var(--pm-primary); border-radius: 3px; transition: width .6s ease; }
+.empty-state { text-align: center; padding: 48px 24px; }
+.empty-state .material-symbols-rounded { font-size: 48px; color: var(--pm-border); margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 6px; }
+.empty-state p { font-size: 14px; color: var(--pm-text-secondary); }
+/* Profile dropdown */
+.profile-toggle {
+    width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent;
+    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-weight: 600; font-size: 16px;
+    transition: all var(--pm-transition); overflow: hidden;
+}
+.profile-toggle:hover { border-color: var(--pm-primary-surface); }
+.profile-toggle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profile-dropdown {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 280px;
+    background: var(--pm-surface); border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light);
+    box-shadow: var(--pm-shadow-lg); opacity: 0; visibility: hidden;
+    transform: translateY(-8px) scale(.97); transition: all var(--pm-transition);
+    overflow: hidden; z-index: 200;
+}
+.profile-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+.profile-dropdown-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--pm-border-light); }
+.profile-dropdown-avatar {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
+    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; font-weight: 600; overflow: hidden;
+}
+.profile-dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-dropdown-header h4 { font-size: 16px; font-weight: 500; }
+.profile-dropdown-header p { font-size: 13px; color: var(--pm-text-secondary); }
+.profile-dropdown-links a, .profile-dropdown-links button {
+    display: flex; align-items: center; gap: 10px; padding: 12px 20px; width: 100%;
+    font-size: 14px; color: var(--pm-text); background: none; border: none;
+    cursor: pointer; font-family: inherit; transition: background var(--pm-transition);
+    text-decoration: none;
+}
+.profile-dropdown-links a:hover, .profile-dropdown-links button:hover { background: var(--pm-bg); }
+.profile-dropdown-links .logout-btn { color: var(--pm-red); }
+@media (max-width: 900px) {
+    .dash-layout { grid-template-columns: 1fr; }
+}
+{% endblock %}
+
 {% block content %}
-<!-- Google Style Top Nav -->
-<nav class="flex justify-between items-center py-3 px-6 bg-g-surface border-b border-g-border sticky top-0 z-50 shadow-[0_1px_2px_0_rgba(60,64,67,0.1)] g-nav">
-    <div class="flex items-center gap-4">
-        <a href="{% url 'core:dashboard' %}" class="text-2xl font-semibold text-g-text-primary no-underline flex items-center gap-2.5 tracking-tight">
-            <div class="flex items-center justify-center w-9 h-9 bg-blue-50 text-g-blue rounded-lg">
-                <i class="fa-solid fa-microphone-lines"></i>
-            </div>
-            PrepMind
+<!-- Navbar -->
+<nav class="pm-nav">
+    <div class="pm-nav-inner">
+        <a href="{% url 'core:dashboard' %}" class="pm-logo">
+            <div class="pm-logo-icon">P</div>
+            <div class="pm-logo-text">Prep<span>Mind</span></div>
         </a>
-    </div>
 
-    <!-- Search Placeholder -->
-    <div class="hidden md:flex bg-[#F1F3F4] border border-transparent px-4 rounded-full h-12 w-[400px] items-center gap-3 text-g-text-secondary transition focus-within:bg-white focus-within:border-g-border focus-within:shadow-[0_1px_2px_rgba(60,64,67,0.2)]">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search past interviews, feedback, patterns..." class="border-none bg-transparent outline-none w-full font-inherit text-base">
-    </div>
-
-    <div class="relative" id="profWrap">
-        <div class="w-10 h-10 rounded-full border-2 border-transparent p-0.5 cursor-pointer transition flex items-center justify-center bg-g-blue text-white font-semibold text-lg hover:border-blue-200 hover:bg-g-blue-hover" id="gProfileToggle">
-            {% if user.socialaccount_set.all.0.get_avatar_url %}
-                <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar" class="w-full h-full rounded-full object-cover">
-            {% else %}
-                {{ user.first_name|first|default:user.username|first|upper }}
-            {% endif %}
-        </div>
-        
-        <div class="absolute top-[calc(100%+10px)] right-0 bg-g-surface shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] border border-g-border rounded-xl w-72 opacity-0 invisible -translate-y-2 transition overflow-hidden profile-dropdown">
-            <div class="p-5 text-center border-b border-g-border">
-                <div class="w-[60px] h-[60px] rounded-full mx-auto mb-2.5 bg-g-blue text-white flex items-center justify-center text-2xl font-bold">
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div style="position:relative" id="profWrap">
+                <div class="profile-toggle" id="gProfileToggle">
                     {% if user.socialaccount_set.all.0.get_avatar_url %}
-                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar" class="w-full h-full rounded-full object-cover">
+                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
                     {% else %}
                         {{ user.first_name|first|default:user.username|first|upper }}
                     {% endif %}
                 </div>
-                <h4 class="m-0 font-medium text-lg">{{ user.get_full_name|default:user.username }}</h4>
-                <p class="mt-1 text-g-text-secondary text-sm">{{ user.email }}</p>
-            </div>
-            <div class="flex flex-col">
-                <a href="{% url 'accounts:setup_profile' %}" class="flex items-center gap-3 py-3 px-5 text-g-text-primary no-underline text-sm hover:bg-g-bg">
-                    <i class="fa-solid fa-pen w-5 text-center text-g-text-secondary"></i> Edit Profile
-                </a>
-                <form action="{% url 'account_logout' %}" method="post" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full flex items-center gap-3 py-3 px-5 text-g-red bg-transparent border-none text-left cursor-pointer font-inherit text-sm hover:bg-g-bg">
-                        <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-g-red"></i> Sign out
-                    </button>
-                </form>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            {% if user.socialaccount_set.all.0.get_avatar_url %}
+                                <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                            {% else %}
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p>{{ user.email }}</p>
+                    </div>
+                    <div class="profile-dropdown-links">
+                        <a href="{% url 'accounts:setup_profile' %}">
+                            <span class="material-symbols-rounded" style="font-size:18px">edit</span> Edit Profile
+                        </a>
+                        <form action="{% url 'account_logout' %}" method="post" style="margin:0">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">
+                                <span class="material-symbols-rounded" style="font-size:18px">logout</span> Sign out
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </nav>
 
-<div class="max-w-[1100px] mx-auto my-10 px-6">
-    <div class="flex flex-col gap-2 mb-8">
-        <h1 class="text-4xl font-medium text-g-text-primary m-0 tracking-tight">Welcome, {{ user.first_name|default:user.username }}</h1>
-        <p class="text-g-text-secondary text-lg m-0">Your personal AI prep dashboard. Let's get you ready for the next big role.</p>
+<main class="pm-container" style="padding-top:40px;padding-bottom:60px;">
+    <!-- Welcome -->
+    <div class="dash-welcome" style="margin-bottom:32px;">
+        <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+        <p>Your personal AI prep dashboard. Let's get you ready for the next big role.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-6 items-start">
-        
+    <div class="dash-layout">
         <!-- Main Column -->
-        <div class="flex flex-col gap-6">
-            
-            <div class="bg-blue-50/30 border border-dashed border-blue-300 rounded-xl p-6 shadow-sm flex flex-col items-start gap-4">
-                <div class="flex items-center gap-3 text-lg font-medium text-g-text-primary">
-                    <i class="fa-solid fa-wand-magic-sparkles text-g-blue"></i> Ready for a new Mock Interview?
+        <div style="display:flex;flex-direction:column;gap:24px;">
+            <!-- Start Interview Card -->
+            <div class="start-card animate-fadeIn">
+                <div class="start-title">
+                    <span class="material-symbols-rounded">auto_awesome</span>
+                    Ready for a new Mock Interview?
                 </div>
-                <p class="m-0 text-g-text-secondary max-w-[600px] leading-relaxed">
-                    Experience a realistic, dynamic voice conversation customized for a <b class="text-g-text-primary">{{ user.target_role|default:"General Role" }}</b> position. Receive instant feedback and tailored insights.
+                <p>
+                    Experience a realistic, dynamic voice conversation customized for a
+                    <strong>{{ user.target_role|default:"General Role" }}</strong> position.
+                    Receive instant feedback and tailored insights.
                 </p>
-                <div class="flex gap-3 mt-2">
-                    <form method="POST" action="{% url 'interviews:start' %}" class="m-0">
+                <div class="start-actions">
+                    <form method="POST" action="{% url 'interviews:start' %}" style="margin:0">
                         {% csrf_token %}
-                        <button type="submit" class="font-outfit font-medium text-sm px-6 py-2.5 rounded-full border-none cursor-pointer flex items-center gap-2 transition no-underline bg-g-blue text-white hover:bg-g-blue-hover hover:shadow-[0_1px_2px_rgba(60,64,67,0.3)]">
-                            <i class="fa-solid fa-microphone"></i> Start Interview
+                        <button type="submit" class="pm-btn pm-btn-primary">
+                            <span class="material-symbols-rounded" style="font-size:18px">mic</span>
+                            Start Interview
                         </button>
                     </form>
-                    <a href="{% url 'accounts:setup_profile' %}" class="font-outfit font-medium text-sm px-6 py-2.5 rounded-full cursor-pointer flex items-center gap-2 transition no-underline bg-transparent text-g-blue border border-g-border hover:bg-blue-50/50 hover:border-blue-200">
-                        <i class="fa-solid fa-sliders"></i> Customize Session
+                    <a href="{% url 'accounts:setup_profile' %}" class="pm-btn pm-btn-outline">
+                        <span class="material-symbols-rounded" style="font-size:18px">tune</span>
+                        Customize Session
                     </a>
                 </div>
             </div>
 
-            <!-- Recent Activity Section -->
-            <div class="bg-g-surface border border-g-border rounded-xl p-6 shadow-[0_1px_2px_rgba(60,64,67,0.05)]">
-                <div class="flex items-center gap-3 text-lg font-medium text-g-text-primary mb-5">
-                    <i class="fa-solid fa-timeline text-g-text-secondary"></i> Recent Activity
+            <!-- Recent Activity -->
+            <div class="pm-card" style="padding:0;overflow:hidden;">
+                <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light);display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="material-symbols-rounded" style="color:var(--pm-text-secondary);font-size:20px">history</span>
+                        <h3 style="font-size:16px;font-weight:500;">Recent Activity</h3>
+                    </div>
+                    <a href="{% url 'analytics:overview' %}" style="font-size: 13px; font-weight: 500; color: var(--pm-primary); text-decoration: none; display: flex; align-items: center; gap: 4px;">View Analytics <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span></a>
                 </div>
-
-                {% if recent_interviews %}
-                    <div class="flex flex-col gap-3">
+                <div style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
+                    {% if recent_interviews %}
                         {% for interview in recent_interviews %}
-<div class="flex flex-col p-5 border border-g-border rounded-xl transition hover:shadow-lg hover:border-blue-500/50 bg-g-surface no-underline text-inherit group mb-4">
-    <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full flex flex-shrink-0 items-center justify-center bg-blue-500/10 text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-            </div>
-            <div>
-                <h4 class="font-medium text-g-title text-lg group-hover:text-blue-400 transition-colors">{{ interview.role|title }}</h4>
-                <p class="text-sm text-g-text mt-1 flex items-center">
-                    <span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-                    {{ interview.start_time|date:"M d, Y" }} <span class="mx-2 text-gray-600">|</span> 
-                    <span class="text-gray-300 font-medium px-2 py-0.5 bg-gray-800 rounded-md text-xs border border-gray-700">Stage: {{ interview.get_stage_display|default:interview.stage|title }}</span>
-                </p>
-            </div>
-        </div>
-        
-        <!-- Score Board -->
-        <div class="flex space-x-3 ml-4">
-            <div class="flex flex-col items-center bg-gray-800/80 border border-gray-700/50 rounded-lg p-3 min-w-[70px] shadow-inner">
-                <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Tech</span>
-                <div class="flex items-baseline">
-                    <span class="text-blue-400 font-bold text-xl">{{ interview.technical_score|default:"--" }}</span>
-                    <span class="text-[10px] text-gray-500 ml-0.5">/100</span>
+                        <a href="{% url 'analytics:session_detail' interview.id %}" style="text-decoration: none; color: inherit;">
+                        <div class="interview-item animate-fadeIn" style="animation-delay:{{ forloop.counter0 }}00ms;">
+                            <div class="interview-left">
+                                <div class="interview-icon">
+                                    <span class="material-symbols-rounded">work</span>
+                                </div>
+                                <div class="interview-meta">
+                                    <h4>{{ interview.role|title }}</h4>
+                                    <p>
+                                        {{ interview.start_time|date:"M d, Y" }}
+                                        <span style="color:var(--pm-border)">·</span>
+                                        <span class="pm-chip" style="background:var(--pm-bg);border:1px solid var(--pm-border-light);font-size:11px;padding:2px 8px;">
+                                            {{ interview.get_stage_display|default:interview.stage|title }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="interview-scores">
+                                <div class="score-badge">
+                                    <span class="label">Tech</span>
+                                    <span class="value blue">{{ interview.technical_score|default:"--" }}</span>
+                                </div>
+                                <div class="score-badge">
+                                    <span class="label">Comm</span>
+                                    <span class="value green">{{ interview.communication_score|default:"--" }}</span>
+                                </div>
+                                <div class="score-badge">
+                                    <span class="label">Conf</span>
+                                    <span class="value purple">{{ interview.confidence_score|default:"--" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if interview.feedback_text %}
+                        <div class="feedback-box animate-fadeIn" style="margin-top:-4px;margin-bottom:4px;">
+                            <h5><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px">description</span> AI Feedback</h5>
+                            <p>{{ interview.feedback_text }}</p>
+                        </div>
+                        {% endif %}
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <span class="material-symbols-rounded">add_circle</span>
+                            <h3>No past interviews</h3>
+                            <p>Click "Start Interview" above to begin your first session.</p>
+                        </div>
+                    {% endif %}
                 </div>
-            </div>
-            <div class="flex flex-col items-center bg-gray-800/80 border border-gray-700/50 rounded-lg p-3 min-w-[70px] shadow-inner">
-                <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Comm</span>
-                <div class="flex items-baseline">
-                    <span class="text-emerald-400 font-bold text-xl">{{ interview.communication_score|default:"--" }}</span>
-                    <span class="text-[10px] text-gray-500 ml-0.5">/100</span>
-                </div>
-            </div>
-            <div class="flex flex-col items-center bg-gray-800/80 border border-gray-700/50 rounded-lg p-3 min-w-[70px] shadow-inner">
-                <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">Conf</span>
-                <div class="flex items-baseline">
-                    <span class="text-purple-400 font-bold text-xl">{{ interview.confidence_score|default:"--" }}</span>
-                    <span class="text-[10px] text-gray-500 ml-0.5">/100</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    {% if interview.feedback_text %}
-    <div class="mt-3 pt-4 border-t border-gray-700/50 bg-gray-800/20 -mx-5 -mb-5 p-5 rounded-b-xl">
-        <div class="flex items-start gap-3">
-            <div class="p-1.5 bg-blue-500/10 rounded-lg shrink-0 mt-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            </div>
-            <div>
-                <h5 class="text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">AI Performance Feedback</h5>
-                <p class="text-sm text-gray-400 leading-relaxed">{{ interview.feedback_text }}</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-{% empty %}
-<div class="text-center py-12 border-2 border-dashed border-gray-700 rounded-xl bg-gray-800/20 flex flex-col items-center justify-center">
-    <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-    </div>
-    <p class="text-gray-300 font-medium mb-1">No past interviews found</p>
-    <p class="text-sm text-gray-500">Click 'Start Interview' above to begin your first session.</p>
-</div>
-{% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-10 px-5">
-                        <i class="fa-solid fa-box-open text-6xl text-g-border mb-4 block"></i>
-                        <h3 class="m-0 mb-2 font-medium text-g-text-primary">No activity yet</h3>
-                        <p class="m-0 text-g-text-secondary text-[0.95rem]">Your past simulated interviews, feedback, and performance stats will appear here.</p>
-                    </div>
-                {% endif %}
             </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="flex flex-col gap-6">
-            
-            <div class="bg-gradient-to-br from-[#fefefe] to-[#f1f3f4] border border-g-border rounded-xl p-6 shadow-[0_1px_2px_rgba(60,64,67,0.05)]">
-                <div class="flex items-center gap-3 text-lg font-medium text-g-text-primary mb-5">
-                    <i class="fa-solid fa-bullseye text-g-red"></i> Preparation Focus
+        <div style="display:flex;flex-direction:column;gap:24px;">
+            <!-- Preparation Focus -->
+            <div class="pm-card sidebar-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-red);font-size:20px">target</span>
+                    <h3 style="font-size:16px;font-weight:500;">Preparation Focus</h3>
                 </div>
-
-                <div class="mb-5 last:mb-0">
-                    <label class="block text-xs uppercase tracking-wider text-g-text-secondary mb-1.5 font-semibold">Target Role</label>
-                    <div class="text-[1.05rem] font-medium text-g-text-primary">{{ user.target_role|default:"Not clearly defined" }}</div>
+                <div class="sidebar-field">
+                    <label>Target Role</label>
+                    <div class="val">{{ user.target_role|default:"Not set" }}</div>
                 </div>
-                <div class="mb-5 last:mb-0">
-                    <label class="block text-xs uppercase tracking-wider text-g-text-secondary mb-1.5 font-semibold">Experience Level</label>
-                    <div class="text-[1.05rem] font-medium text-g-text-primary">{{ user.experience_level|default:"Junior / Entry-level" }}</div>
+                <div class="sidebar-field">
+                    <label>Experience Level</label>
+                    <div class="val">{{ user.experience_level|default:"Not set" }}</div>
                 </div>
-                <div class="mb-5 last:mb-0">
-                    <label class="block text-xs uppercase tracking-wider text-g-text-secondary mb-1.5 font-semibold">Resume Status</label>
+                <div class="sidebar-field">
+                    <label>Resume Status</label>
                     {% if user.resume %}
-                        <div class="text-g-green flex items-center gap-1.5 font-medium text-[1.05rem]">
-                            <i class="fa-solid fa-circle-check"></i> Uploaded & Parsed
+                        <div class="val success" style="display:flex;align-items:center;gap:6px;">
+                            <span class="material-symbols-rounded filled" style="font-size:16px">check_circle</span> Uploaded
                         </div>
                     {% else %}
-                        <div class="text-g-red flex items-center gap-1.5 font-medium text-[1.05rem]">
-                            <i class="fa-solid fa-circle-xmark"></i> Not Uploaded
+                        <div class="val error" style="display:flex;align-items:center;gap:6px;">
+                            <span class="material-symbols-rounded" style="font-size:16px">cancel</span> Not uploaded
                         </div>
                     {% endif %}
                 </div>
-
-                <div class="mt-6">
-                    <a href="{% url 'accounts:setup_profile' %}" class="text-g-blue no-underline text-sm font-medium flex items-center gap-1 hover:underline">
-                        Update Profile <i class="fa-solid fa-arrow-right"></i>
-                    </a>
-                </div>
+                <a href="{% url 'accounts:setup_profile' %}" style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:4px;margin-top:4px;">
+                    Update Profile <span class="material-symbols-rounded" style="font-size:16px">arrow_forward</span>
+                </a>
             </div>
 
-            <!-- Weekly Goal / Progress -->
-            <div class="bg-g-surface border border-g-border rounded-xl p-6 shadow-[0_1px_2px_rgba(60,64,67,0.05)]">
-                <div class="flex items-center gap-3 text-lg font-medium text-g-text-primary mb-5">
-                    <i class="fa-solid fa-chart-simple text-g-yellow"></i> Weekly Progress
+            <!-- Weekly Progress -->
+            <div class="pm-card sidebar-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-yellow);font-size:20px">bar_chart</span>
+                    <h3 style="font-size:16px;font-weight:500;">Weekly Progress</h3>
                 </div>
-                <div class="mb-2 font-semibold text-3xl text-g-text-primary">
-                    {% if recent_interviews %}{{ recent_interviews|length }}/3{% else %}0/3{% endif %}
-                </div>
-                <div class="text-g-text-secondary text-sm">
-                    Completed mock interviews this week. Aim for 3 to stay sharp.
-                </div>
-                <div class="mt-2.5 h-2 bg-g-border rounded-full overflow-hidden">
-                    <div class="h-full bg-g-blue rounded-full transition-all duration-500" style="width: {% if recent_interviews %}33%{% else %}0%{% endif %};"></div>
+                <div>
+                    <div style="font-size:28px;font-weight:600;color:var(--pm-text);">
+                        {% if recent_interviews %}{{ recent_interviews|length }}{% else %}0{% endif %}<span style="font-size:16px;color:var(--pm-text-secondary);font-weight:400">/3</span>
+                    </div>
+                    <div style="font-size:13px;color:var(--pm-text-secondary);margin-top:2px;">
+                        Completed mock interviews this week. Aim for 3 to stay sharp.
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% if recent_interviews %}{% widthratio recent_interviews|length 3 100 %}%{% else %}0%{% endif %};"></div>
+                    </div>
                 </div>
             </div>
-
         </div>
     </div>
-</div>
+</main>
+{% endblock %}
 
-<style>
-    /* Required to hide base.html navs dynamically */
-    nav:not(.g-nav) { display: none !important; }
-    
-    .profile-dropdown.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-</style>
-
+{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Dropdown Logic
-        const wrap = document.getElementById('profWrap');
-        const btn = document.getElementById('gProfileToggle');
-        const dropdown = wrap.querySelector('.profile-dropdown');
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('gProfileToggle');
+    const dropdown = document.getElementById('profileDropdown');
+    const wrap = document.getElementById('profWrap');
 
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dropdown.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!wrap.contains(e.target)) {
-                dropdown.classList.remove('active');
-            }
-        });
-
-        // Hide main navbars from base so they don't overlay
-        const otherNavs = document.querySelectorAll('nav:not(.g-nav)');
-        otherNavs.forEach(nav => nav.style.display = 'none');
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
     });
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) dropdown.classList.remove('active');
+    });
+});
 </script>
 {% endblock %}
