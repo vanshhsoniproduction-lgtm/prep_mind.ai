@@ -87,6 +87,13 @@
                         Sign in with Google
                     </button>
                 </form>
+                <form action="{% url 'accounts:guest_login' %}" method="post" style="display:inline; margin-left: 10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="pm-btn pm-btn-outline" style="gap: 10px; background: #e0e0e0; border-color: #e0e0e0;">
+                        <span class="material-symbols-rounded" style="font-size:18px; color: #555;">person_outline</span>
+                        <span style="color: #333;">Login as Guest</span>
+                    </button>
+                </form>
             {% endif %}
         </div>
     </div>
@@ -105,13 +112,22 @@
                 Start Mock Interview
             </a>
         {% else %}
-            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
-                {% csrf_token %}
-                <button type="submit" class="pm-btn pm-btn-primary" style="padding: 14px 36px; font-size: 16px; gap: 10px;">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:20px;height:20px;background:#fff;border-radius:50%;padding:2px;">
-                    Continue with Google
-                </button>
-            </form>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="pm-btn pm-btn-primary" style="padding: 14px 36px; font-size: 16px; gap: 10px;">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:20px;height:20px;background:#fff;border-radius:50%;padding:2px;">
+                        Continue with Google
+                    </button>
+                </form>
+                <form action="{% url 'accounts:guest_login' %}" method="post" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="pm-btn" style="padding: 14px 36px; font-size: 16px; gap: 10px; background: #e0e0e0; color: #333; border-radius: var(--pm-radius-md);">
+                        <span class="material-symbols-rounded" style="font-size:20px; color: #555;">person_outline</span>
+                        Try as Guest
+                    </button>
+                </form>
+            </div>
         {% endif %}
     </div>
 

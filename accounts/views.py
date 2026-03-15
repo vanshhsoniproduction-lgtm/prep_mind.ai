@@ -19,3 +19,20 @@ def setup_profile(request):
         return redirect('core:dashboard')  # We will build this later
         
     return render(request, 'accounts/setup_profile.html')
+
+import uuid
+from django.contrib.auth import login
+from django.urls import reverse
+
+def guest_login(request):
+    if request.method == 'POST':
+        guest_uuid = str(uuid.uuid4())[:8]
+        username = f"guest_{guest_uuid}"
+        user = CustomUser.objects.create(username=username)
+        # Random password just in case
+        user.set_unusable_password()
+        user.save()
+        # Log the user in
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        return redirect('core:dashboard')
+    return redirect('core:index')
