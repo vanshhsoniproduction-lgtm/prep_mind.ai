@@ -6,7 +6,7 @@ import time
 import os
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
-MODELS = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash']
+MODELS = ['gemini-3-flash-preview']
 
 def _call_gemini(prompt, response_schema=None):
     last_error = None

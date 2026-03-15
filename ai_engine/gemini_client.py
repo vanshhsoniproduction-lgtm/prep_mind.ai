@@ -9,12 +9,7 @@ from google import genai
 from google.genai import types
 
 LOGGER = logging.getLogger(__name__)
-MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
-    "gemini-3-flash-preview",
-    "gemini-1.5-flash"
-]
+MODELS = ['gemini-3-flash-preview']
 RATE_LIMIT_DELAY = 2
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
