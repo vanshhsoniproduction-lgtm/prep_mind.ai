@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+.dash-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+.dash-welcome h1 { font-size: 32px; font-weight: 600; margin-bottom: 6px; }
+.dash-welcome p { color: var(--pm-text-secondary); font-size: 16px; }
+.start-card {
+    background: var(--pm-primary-light); border: 1px dashed var(--pm-primary-surface);
+    border-radius: var(--pm-radius-lg); padding: 28px; display: flex; flex-direction: column; gap: 16px;
+}
+.start-card .start-title { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; }
+.start-card .start-title .material-symbols-rounded { color: var(--pm-primary); }
+.start-card p { color: var(--pm-text-secondary); line-height: 1.7; max-width: 600px; }
+.start-actions { display: flex; gap: 10px; margin-top: 4px; }
+.interview-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-radius: var(--pm-radius-md);
+    border: 1px solid var(--pm-border-light); background: var(--pm-surface);
+    transition: all var(--pm-transition); cursor: pointer;
+}
+.interview-item:hover { box-shadow: var(--pm-shadow-sm); border-color: var(--pm-primary-surface); }
+.interview-left { display: flex; align-items: center; gap: 14px; }
+.interview-icon {
+    width: 44px; height: 44px; border-radius: var(--pm-radius-md);
+    background: var(--pm-primary-light); color: var(--pm-primary);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.interview-meta h4 { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+.interview-meta p { font-size: 12px; color: var(--pm-text-secondary); display: flex; align-items: center; gap: 6px; }
+.interview-scores { display: flex; gap: 8px; }
+.score-badge {
+    display: flex; flex-direction: column; align-items: center; padding: 6px 10px;
+    border-radius: var(--pm-radius-sm); background: var(--pm-bg); min-width: 54px;
+    border: 1px solid var(--pm-border-light);
+}
+.score-badge .label { font-size: 9px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; color: var(--pm-text-disabled); }
+.score-badge .value { font-size: 18px; font-weight: 600; }
+.score-badge .value.blue { color: var(--pm-primary); }
+.score-badge .value.green { color: var(--pm-green); }
+.score-badge .value.purple { color: #7c3aed; }
+.feedback-box {
+    margin-top: 12px; padding: 14px 16px; background: var(--pm-bg);
+    border-radius: var(--pm-radius-sm); border: 1px solid var(--pm-border-light);
+}
+.feedback-box h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); margin-bottom: 6px; font-weight: 600; }
+.feedback-box p { font-size: 13px; color: var(--pm-text-secondary); line-height: 1.6; }
+.sidebar-card { display: flex; flex-direction: column; gap: 18px; }
+.sidebar-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); font-weight: 600; margin-bottom: 4px; }
+.sidebar-field .val { font-size: 15px; font-weight: 500; color: var(--pm-text); }
+.sidebar-field .val.success { color: var(--pm-green); }
+.sidebar-field .val.error { color: var(--pm-red); }
+.progress-bar-bg { height: 6px; background: var(--pm-border-light); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress-bar-fill { height: 100%; background: var(--pm-primary); border-radius: 3px; transition: width .6s ease; }
+.empty-state { text-align: center; padding: 48px 24px; }
+.empty-state .material-symbols-rounded { font-size: 48px; color: var(--pm-border); margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 6px; }
+.empty-state p { font-size: 14px; color: var(--pm-text-secondary); }
+/* Profile dropdown */
+.profile-toggle {
+    width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent;
+    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-weight: 600; font-size: 16px;
+    transition: all var(--pm-transition); overflow: hidden;
+}
+.profile-toggle:hover { border-color: var(--pm-primary-surface); }
+.profile-toggle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profile-dropdown {
+    position: absolute; top: calc(100% + 8px); right: 0; width: 280px;
+    background: var(--pm-surface); border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light);
+    box-shadow: var(--pm-shadow-lg); opacity: 0; visibility: hidden;
+    transform: translateY(-8px) scale(.97); transition: all var(--pm-transition);
+    overflow: hidden; z-index: 200;
+}
+.profile-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+.profile-dropdown-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--pm-border-light); }
+.profile-dropdown-avatar {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
+    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; font-weight: 600; overflow: hidden;
+}
+.profile-dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-dropdown-header h4 { font-size: 16px; font-weight: 500; }
+.profile-dropdown-header p { font-size: 13px; color: var(--pm-text-secondary); }
+.profile-dropdown-links a, .profile-dropdown-links button {
+    display: flex; align-items: center; gap: 10px; padding: 12px 20px; width: 100%;
+    font-size: 14px; color: var(--pm-text); background: none; border: none;
+    cursor: pointer; font-family: inherit; transition: background var(--pm-transition);
+    text-decoration: none;
+}
+.profile-dropdown-links a:hover, .profile-dropdown-links button:hover { background: var(--pm-bg); }
+.profile-dropdown-links .logout-btn { color: var(--pm-red); }
+@media (max-width: 900px) {
+    .dash-layout { grid-template-columns: 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<!-- Navbar -->
+<nav class="pm-nav">
+    <div class="pm-nav-inner">
+        <a href="{% url 'core:dashboard' %}" class="pm-logo">
+            <div class="pm-logo-icon">P</div>
+            <div class="pm-logo-text">Prep<span>Mind</span></div>
+        </a>
+
+        <div style="display:flex;align-items:center;gap:16px;">
+            <div style="position:relative" id="profWrap">
+                <div class="profile-toggle" id="gProfileToggle">
+                    {% if user.socialaccount_set.all.0.get_avatar_url %}
+                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                    {% else %}
+                        {{ user.first_name|first|default:user.username|first|upper }}
+                    {% endif %}
+                </div>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            {% if user.socialaccount_set.all.0.get_avatar_url %}
+                                <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                            {% else %}
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p>{{ user.email }}</p>
+                    </div>
+                    <div class="profile-dropdown-links">
+                        <a href="{% url 'accounts:setup_profile' %}">
+                            <span class="material-symbols-rounded" style="font-size:18px">edit</span> Edit Profile
+                        </a>
+                        <form action="{% url 'account_logout' %}" method="post" style="margin:0">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">
+                                <span class="material-symbols-rounded" style="font-size:18px">logout</span> Sign out
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="pm-container" style="padding-top:40px;padding-bottom:60px;">
+    <!-- Welcome -->
+    <div class="dash-welcome" style="margin-bottom:32px;">
+        <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+        <p>Your personal AI prep dashboard. Let's get you ready for the next big role.</p>
+    </div>
+
+    <div class="dash-layout">
+        <!-- Main Column -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+            <!-- Start Interview Card -->
+            <div class="start-card animate-fadeIn">
+                <div class="start-title">
+                    <span class="material-symbols-rounded">auto_awesome</span>
+                    Ready for a new Mock Interview?
+                </div>
+                <p>
+                    Experience a realistic, dynamic voice conversation customized for a
+                    <strong>{{ user.target_role|default:"General Role" }}</strong> position.
+                    Receive instant feedback and tailored insights.
+                </p>
+                <div class="start-actions">
+                    <form method="POST" action="{% url 'interviews:start' %}" style="margin:0">
+                        {% csrf_token %}
+                        <button type="submit" class="pm-btn pm-btn-primary">
+                            <span class="material-symbols-rounded" style="font-size:18px">mic</span>
+                            Start Interview
+                        </button>
+                    </form>
+                    <a href="{% url 'accounts:setup_profile' %}" class="pm-btn pm-btn-outline">
+                        <span class="material-symbols-rounded" style="font-size:18px">tune</span>
+                        Customize Session
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="pm-card" style="padding:0;overflow:hidden;">
+                <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light);display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="material-symbols-rounded" style="color:var(--pm-text-secondary);font-size:20px">history</span>
+                        <h3 style="font-size:16px;font-weight:500;">Recent Activity</h3>
+                    </div>
+                    <a href="{% url 'analytics:overview' %}" style="font-size: 13px; font-weight: 500; color: var(--pm-primary); text-decoration: none; display: flex; align-items: center; gap: 4px;">View Analytics <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span></a>
+                </div>
+                <div style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
+                    {% if recent_interviews %}
+                        {% for interview in recent_interviews %}
+                        <a href="{% url 'analytics:session_detail' interview.id %}" style="text-decoration: none; color: inherit;">
+                        <div class="interview-item animate-fadeIn" style="animation-delay:{{ forloop.counter0 }}00ms;">
+                            <div class="interview-left">
+                                <div class="interview-icon">
+                                    <span class="material-symbols-rounded">work</span>
+                                </div>
+                                <div class="interview-meta">
+                                    <h4>{{ interview.role|title }}</h4>
+                                    <p>
+                                        {{ interview.start_time|date:"M d, Y" }}
+                                        <span style="color:var(--pm-border)">·</span>
+                                        <span class="pm-chip" style="background:var(--pm-bg);border:1px solid var(--pm-border-light);font-size:11px;padding:2px 8px;">
+                                            {{ interview.get_stage_display|default:interview.stage|title }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="interview-scores">
+                                <div class="score-badge">
+                                    <span class="label">Tech</span>
+                                    <span class="value blue">{{ interview.technical_score|default:"--" }}</span>
+                                </div>
+                                <div class="score-badge">
+                                    <span class="label">Comm</span>
+                                    <span class="value green">{{ interview.communication_score|default:"--" }}</span>
+                                </div>
+                                <div class="score-badge">
+                                    <span class="label">Conf</span>
+                                    <span class="value purple">{{ interview.confidence_score|default:"--" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if interview.feedback_text %}
+                        <div class="feedback-box animate-fadeIn" style="margin-top:-4px;margin-bottom:4px;">
+                            <h5><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px">description</span> AI Feedback</h5>
+                            <p>{{ interview.feedback_text }}</p>
+                        </div>
+                        {% endif %}
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <span class="material-symbols-rounded">add_circle</span>
+                            <h3>No past interviews</h3>
+                            <p>Click "Start Interview" above to begin your first session.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div style="display:flex;flex-direction:column;gap:24px;">
+            <!-- Preparation Focus -->
+            <div class="pm-card sidebar-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-red);font-size:20px">target</span>
+                    <h3 style="font-size:16px;font-weight:500;">Preparation Focus</h3>
+                </div>
+                <div class="sidebar-field">
+                    <label>Target Role</label>
+                    <div class="val">{{ user.target_role|default:"Not set" }}</div>
+                </div>
+                <div class="sidebar-field">
+                    <label>Experience Level</label>
+                    <div class="val">{{ user.experience_level|default:"Not set" }}</div>
+                </div>
+                <div class="sidebar-field">
+                    <label>Resume Status</label>
+                    {% if user.resume %}
+                        <div class="val success" style="display:flex;align-items:center;gap:6px;">
+                            <span class="material-symbols-rounded filled" style="font-size:16px">check_circle</span> Uploaded
+                        </div>
+                    {% else %}
+                        <div class="val error" style="display:flex;align-items:center;gap:6px;">
+                            <span class="material-symbols-rounded" style="font-size:16px">cancel</span> Not uploaded
+                        </div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'accounts:setup_profile' %}" style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:4px;margin-top:4px;">
+                    Update Profile <span class="material-symbols-rounded" style="font-size:16px">arrow_forward</span>
+                </a>
+            </div>
+
+            <!-- Weekly Progress -->
+            <div class="pm-card sidebar-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-yellow);font-size:20px">bar_chart</span>
+                    <h3 style="font-size:16px;font-weight:500;">Weekly Progress</h3>
+                </div>
+                <div>
+                    <div style="font-size:28px;font-weight:600;color:var(--pm-text);">
+                        {% if recent_interviews %}{{ recent_interviews|length }}{% else %}0{% endif %}<span style="font-size:16px;color:var(--pm-text-secondary);font-weight:400">/3</span>
+                    </div>
+                    <div style="font-size:13px;color:var(--pm-text-secondary);margin-top:2px;">
+                        Completed mock interviews this week. Aim for 3 to stay sharp.
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {% if recent_interviews %}{% widthratio recent_interviews|length 3 100 %}%{% else %}0%{% endif %};"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIXEL CALENDAR CARD (Sidebar style) -->
+            <style>
+            .g-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+            .g-cal-day {
+                aspect-ratio: 1;
+                border-radius: 6px;
+                background: var(--pm-bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                color: var(--pm-text-secondary);
+                position: relative;
+                cursor: default;
+                transition: transform 0.2s;
+            }
+            .g-cal-day.active { background: var(--pm-green); color: white; cursor: pointer; }
+            .g-cal-day.active:hover { transform: scale(1.1); }
+            .g-cal-tooltip {
+                display: none;
+                position: absolute;
+                bottom: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--pm-surface);
+                color: var(--pm-text);
+                padding: 8px 12px;
+                border-radius: var(--pm-radius-sm);
+                border: 1px solid var(--pm-border-light);
+                font-size: 11px;
+                width: max-content;
+                z-index: 10;
+                box-shadow: var(--pm-shadow-md);
+            }
+            .g-cal-day.active:hover .g-cal-tooltip { display: block; }
+            .g-cal-day.scheduled {
+                background: #fef7e0 !important;
+                color: #b06000 !important;
+                border: 1px solid #fbbc04;
+                font-weight: 600;
+            }
+
+            </style>
+
+            <div class="pm-card sidebar-card" style="margin-top: 0;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-primary);font-size:20px">calendar_month</span>
+                    <h3 style="font-size:16px;font-weight:500;">Interview Activity</h3>
+                </div>
+                <div class="g-cal-grid" id="calendarGrid"></div>
+            </div>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const grid = document.getElementById('calendarGrid');
+                if(!grid) return;
+                const daysInMonth = 31;
+                
+                const mockActiveDays = {
+                    12: { role: 'Software Engineer', score: '85/100', date: 'March 12, 2026' },
+                    14: { role: 'Frontend Developer', score: '92/100', date: 'March 14, 2026' },
+                    28: { role: 'Data Scientist', score: 'Pending', date: 'March 28, 2026' },
+                    30: { role: 'System Design', score: 'Scheduled', scheduled: true, date: 'March 30, 2026' }
+                };
+
+                for(let i=1; i<=daysInMonth; i++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'g-cal-day';
+                    dayDiv.innerText = i;
+                    
+                    if(mockActiveDays[i]) {
+                        if (mockActiveDays[i].score === 'Pending' || mockActiveDays[i].scheduled) {
+                        dayDiv.classList.add('scheduled');
+                    } else {
+                        dayDiv.classList.add('active');
+                    }
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'g-cal-tooltip';
+                        tooltip.innerHTML = `<strong>${mockActiveDays[i].role}</strong><br/>Score: ${mockActiveDays[i].score}<br/>${mockActiveDays[i].date}`;
+                        dayDiv.appendChild(tooltip);
+                    }
+                    grid.appendChild(dayDiv);
+                }
+            });
+            </script>
+            <!-- /PIXEL CALENDAR CARD -->
+        </div>
+    </div>
+
+
+
+</main>
+
+    <!-- SCHEDULE MODAL -->
+    <div id="scheduleModalOverlay" class="pixel-modal-overlay">
+        <div class="pixel-schedule-modal">
+            <button class="pixel-close-btn" id="closeScheduleModal"><span class="material-symbols-rounded">close</span></button>
+            <h2 style="margin-top:0; font-size:24px; font-weight:500; font-family:'Google Sans', sans-serif;">Next meeting?</h2>
+            <p style="color:var(--pm-text-secondary); margin-bottom: 24px;">Schedule your next mock interview session.</p>
+            
+            <form id="dashboardScheduleForm">
+                <input type="text" id="schedTitle" class="pixel-input" placeholder="Title (e.g., Technical Round)" value="Technical Round 2" required>
+                <input type="date" id="schedDate" class="pixel-input" required>
+                <input type="time" id="schedTime" class="pixel-input" required>
+                <button type="submit" class="pixel-btn" id="schedBtn">Add to calendar</button>
+            </form>
+            <div id="schedResult" style="margin-top: 16px;"></div>
+        </div>
+    </div>
+
+    <style>
+    .pixel-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        z-index: 9999; display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .pixel-modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .pixel-schedule-modal {
+        background: white; border-radius: 28px; padding: 32px; width: 90%; max-width: 420px;
+        box-shadow: 0 24px 48px rgba(0,0,0,0.2); position: relative;
+        transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .pixel-modal-overlay.show .pixel-schedule-modal { transform: translateY(0); }
+    
+    .pixel-close-btn {
+        position: absolute; top: 20px; right: 20px;
+        background: #fce8e6; color: #c5221f; border: none;
+        width: 36px; height: 36px; border-radius: 50%;
+        font-size: 20px; cursor: pointer; display: flex;
+        align-items: center; justify-content: center; transition: 0.2s;
+        text-decoration: none;
+    }
+    .pixel-close-btn:hover { background: #fad2cf; }
+    
+    .pixel-input {
+        width: 100%; border: 2px solid #f1f3f4; border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 16px; font-size: 16px;
+        background: #f8f9fa; transition: 0.2s; font-family: inherit;
+        box-sizing: border-box;
+    }
+    .pixel-input:focus { border-color: #1a73e8; outline: none; background: white; }
+    
+    .pixel-btn {
+        width: 100%; padding: 14px; border-radius: 100px;
+        background: #d3e3fd; color: #0b57d0; border: none; font-weight: 600;
+        font-size: 16px; cursor: pointer; transition: 0.2s; font-family: inherit;
+    }
+    .pixel-btn:hover { background: #b8d0fa; }
+    </style>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const schedSessionId = urlParams.get('schedule_session_id');
+        const modal = document.getElementById('scheduleModalOverlay');
+        const closeBtn = document.getElementById('closeScheduleModal');
+        const schedForm = document.getElementById('dashboardScheduleForm');
+        
+        if (schedSessionId) {
+            modal.classList.add('show');
+            // Remove from URL so a refresh doesn't trigger it again
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Default date/time logic (Tomorrow 10:00 AM)
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            document.getElementById('schedDate').value = now.toISOString().split('T')[0];
+            document.getElementById('schedTime').value = '10:00';
+        }
+        
+        const closeModal = () => {
+            modal.classList.remove('show');
+        };
+        
+        closeBtn.addEventListener('click', closeModal);
+        
+        schedForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('schedBtn');
+            btn.textContent = 'Scheduling...';
+            btn.disabled = true;
+            
+            fetch('/interviews/api/schedule-interview/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    session_id: schedSessionId || '1',
+                    date: document.getElementById('schedDate').value,
+                    time: document.getElementById('schedTime').value,
+                    notes: document.getElementById('schedTitle').value
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    btn.textContent = 'Scheduled!';
+                    btn.style.background = '#c4eed0';
+                    btn.style.color = '#0d652d';
+                    setTimeout(closeModal, 1500); // Close after 1.5s
+                } else {
+                    document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Failed: ${data.error || 'Unknown'}</span>`;
+                    btn.textContent = 'Add to calendar';
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Error scheduling.</span>`;
+                btn.textContent = 'Add to calendar';
+                btn.disabled = false;
+            });
+        });
+    });
+    </script>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('gProfileToggle');
+    const dropdown = document.getElementById('profileDropdown');
+    const wrap = document.getElementById('profWrap');
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) dropdown.classList.remove('active');
+    });
+});
+</script>
+{% endblock %}

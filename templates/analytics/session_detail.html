@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+.pm-shell { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.pm-page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+.pm-kicker { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--pm-primary); letter-spacing: 0.5px; margin-bottom: 8px; }
+.pm-page-header h1 { font-size: 32px; font-weight: 700; color: var(--pm-text); margin-bottom: 8px; }
+.pm-subtle { color: var(--pm-text-secondary); font-size: 15px; }
+
+.pm-score-chip { background: var(--pm-surface); border: 1px solid var(--pm-border-light); padding: 16px 24px; border-radius: var(--pm-radius-lg); text-align: right; box-shadow: var(--pm-shadow-sm); }
+.pm-score-chip .label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--pm-text-secondary); }
+.pm-score-chip .value { display: block; font-size: 36px; font-weight: 700; color: var(--pm-primary); line-height: 1; margin: 4px 0 8px 0; }
+.pm-score-chip .pill { margin: 0; }
+
+.pm-grid { display: grid; gap: 24px; margin-bottom: 24px; }
+.pm-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.pm-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+.pm-card { background: var(--pm-surface); border: 1px solid var(--pm-border-light); border-radius: var(--pm-radius-lg); padding: 24px; box-shadow: var(--pm-shadow-sm); }
+.pm-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--pm-text); }
+
+.score-ring { display: flex; align-items: center; justify-content: center; position: relative; }
+.score-meta { position: absolute; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.score-meta p { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--pm-text-secondary); }
+.score-meta h2 { font-size: 42px; font-weight: 700; color: var(--pm-text); line-height: 1.1; margin: 0; }
+
+.score-table { display: flex; flex-direction: column; gap: 12px; }
+.score-table .row { display: flex; justify-content: space-between; font-size: 15px; border-bottom: 1px dashed var(--pm-border-light); padding-bottom: 12px; }
+.score-table .row:last-child { border-bottom: none; }
+.score-table .row span:last-child { font-weight: 600; color: var(--pm-text); }
+.score-table .row.total { font-weight: 600; color: var(--pm-primary); background: var(--pm-primary-light); padding: 12px; border-radius: var(--pm-radius-sm); border: none; }
+
+.pm-mini-metrics { display: flex; justify-content: space-around; margin-bottom: 24px; }
+.pm-mini-metrics .mini p { font-size: 11px; text-transform: uppercase; font-weight: 600; color: var(--pm-text-secondary); margin-bottom: 4px; text-align: center; }
+.pm-mini-metrics .mini h4 { font-size: 24px; font-weight: 600; color: var(--pm-text); text-align: center; }
+
+.pill-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.pill { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; font-size: 12px; font-weight: 600; border-radius: var(--pm-radius-full); }
+.pill.positive { background: var(--pm-green-light); color: var(--pm-green); }
+.pill.neutral { background: var(--pm-yellow-light); color: var(--pm-yellow); }
+
+.pm-split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.bullets { padding-left: 20px; color: var(--pm-text); }
+.bullets li { margin-bottom: 8px; font-size: 15px; }
+.bullets.warn { color: var(--pm-red); }
+
+.pm-card-sub { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--pm-border-light); }
+.pm-card-sub h4 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+
+.weak-list { display: flex; flex-direction: column; gap: 16px; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header-row h3 { margin: 0; }
+
+.transcript-body { display: flex; flex-direction: column; gap: 20px; max-height: 500px; overflow-y: auto; padding-right: 8px; font-family: 'Inter', sans-serif; font-size: 14px; }
+.turn { display: flex; flex-direction: column; gap: 12px; }
+
+/* Message Bubble Styles */
+.msg-bubble { 
+  position: relative;
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.msg-bubble .sender {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+
+.msg-ai {
+  align-self: flex-start;
+  background: var(--pm-primary-light);
+  color: var(--pm-text);
+  border-bottom-left-radius: 4px;
+}
+.msg-ai .sender { color: var(--pm-primary-hover); }
+
+.msg-user {
+  align-self: flex-end;
+  background: var(--pm-primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.msg-user .sender { color: rgba(255, 255, 255, 0.9); }
+
+.msg-code {
+  align-self: flex-end;
+  background: #282c34;
+  color: #abb2bf;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 16px;
+  border-radius: var(--pm-radius-md);
+  margin-top: -4px;
+  width: 100%;
+  max-width: 90%;
+  overflow-x: auto;
+  border-bottom-right-radius: 4px;
+}
+
+/* Custom Scrollbar for Transcript */
+.transcript-body::-webkit-scrollbar { width: 6px; }
+.transcript-body::-webkit-scrollbar-track { background: transparent; }
+.transcript-body::-webkit-scrollbar-thumb { background: var(--pm-border); border-radius: 10px; }
+.transcript-body::-webkit-scrollbar-thumb:hover { background: var(--pm-text-disabled); }
+
+.pm-chat { background: var(--pm-bg); border-radius: var(--pm-radius-md); padding: 16px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; font-family: 'Inter', sans-serif; font-size: 14px; }
+.chat-row { display: flex; flex-direction: column; gap: 4px; }
+.chat-row.ai { align-items: flex-start; }
+.chat-row.user { align-items: flex-end; }
+.chat-row .msg { padding: 12px 16px; border-radius: var(--pm-radius-md); max-width: 85%; line-height: 1.5; white-space: pre-wrap; }
+.chat-row.ai .msg { background: var(--pm-primary-light); color: var(--pm-primary-hover); border-bottom-left-radius: 4px; }
+.chat-row.user .msg { background: var(--pm-surface); color: var(--pm-text); border: 1px solid var(--pm-border-light); border-bottom-right-radius: 4px; }
+
+.pm-btn { background: var(--pm-primary); color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: 500; border-radius: var(--pm-radius-sm); cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s; }
+.pm-btn.ghost { background: transparent; color: var(--pm-primary); border: 1px solid var(--pm-border-light); }
+.pm-btn:hover { background: var(--pm-primary-hover); }
+.pm-btn.ghost:hover { background: var(--pm-primary-light); }
+
+@media (max-width: 768px) {
+  .pm-grid-2, .pm-grid-3, .pm-split { grid-template-columns: 1fr; }
+  .pm-page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .pm-score-chip { align-self: stretch; text-align: left; }
+}
+{% endblock %}
+
+{% block content %}
+<section class="pm-shell analysis-page">
+  <div class="pm-page-header">
+    <div>
+      <p class="pm-kicker">Post-Interview Analysis</p>
+      <h1>{{ session.role }}</h1>
+      <p class="pm-subtle">{{ session.start_time|date:"M d, Y H:i" }}{% if duration %} • Duration {{ duration }}{% endif %}</p>
+    </div>
+    <div class="pm-score-chip">
+      <span class="label">Overall</span>
+      <span class="value">{{ overall_score }} / 100</span>
+      <span class="pill">{{ performance_label }}</span>
+    </div>
+  </div>
+
+  <div class="pm-grid pm-grid-3">
+    <div class="pm-card score-ring">
+      <canvas id="overallRing" width="160" height="160"></canvas>
+      <div class="score-meta">
+        <p>Total Score</p>
+        <h2>{{ overall_score }}</h2>
+        <p class="pm-subtle">{{ performance_label }}</p>
+      </div>
+    </div>
+
+    <div class="pm-card">
+      <h3>Score Breakdown</h3>
+      <div class="score-table">
+        {% for row in skill_rows %}
+          <div class="row"><span>{{ row.label }}</span><span>{{ row.value }}</span></div>
+        {% endfor %}
+        <div class="row total"><span>AI Confidence</span><span>{{ ai_confidence }}</span></div>
+        <div class="row total"><span>Percentile</span><span>{{ percentile }}th</span></div>
+      </div>
+    </div>
+
+    <div class="pm-card">
+      <h3>Analytics</h3>
+      <div class="pm-mini-metrics">
+        <div class="mini"><p>Tech</p><h4>{{ session.technical_score|default:'-' }}</h4></div>
+        <div class="mini"><p>Comm</p><h4>{{ session.communication_score|default:'-' }}</h4></div>
+        <div class="mini"><p>Conf</p><h4>{{ session.confidence_score|default:'-' }}</h4></div>
+      </div>
+      <canvas id="radarChart"></canvas>
+    </div>
+  </div>
+
+  <div class="pm-grid pm-grid-2">
+    <div class="pm-card">
+      <h3>Strengths & Improvements</h3>
+      <div class="pill-row">
+        <span class="pill positive">Strengths</span>
+        <span class="pill neutral">Areas to Improve</span>
+      </div>
+      <div class="pm-split">
+        <div>
+          <ul class="bullets">
+            <li>Clear explanation of concepts</li>
+            <li>Good communication flow</li>
+            <li>Structured responses</li>
+          </ul>
+        </div>
+        <div>
+          <ul class="bullets warn">
+            <li>Deepen technical depth where scores are lower</li>
+            <li>Show more confidence on complex topics</li>
+            <li>Practice concise real-world examples</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pm-card-sub">
+        <h4>Weak Areas (auto-detected)</h4>
+        <div class="weak-list">
+          {% for item in weak_suggestions %}
+            <div class="weak-item">
+              <div>
+                <p class="title">{{ item.name }}</p>
+                <p class="pm-subtle">{{ item.suggestion }}</p>
+              </div>
+              <span class="pill">{{ item.score }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="pm-card">
+      <h3>Detailed Feedback</h3>
+      <p class="pm-subtle">AI Summary</p>
+      <p>{{ session.feedback_text|default:'Feedback will appear after completion.' }}</p>
+      <div class="pm-card-sub">
+        <h4>Actionable Suggestions</h4>
+        <ul class="bullets">
+          <li>Practice explaining core topics with concrete examples.</li>
+          <li>Use a clear structure: context → approach → result.</li>
+          <li>Rehearse in the language you will interview in (mirror candidate).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="pm-grid pm-grid-2">
+    <div class="pm-card transcript">
+      <div class="header-row">
+        <h3>Transcript</h3>
+        <button class="pm-btn ghost" onclick="copyTranscript()">Copy</button>
+      </div>
+      <div id="transcript" class="transcript-body">
+        {% for item in qa %}
+          <div class="turn">
+            <div class="msg-bubble msg-ai">
+              <span class="sender">Interviewer</span>
+              {{ item.question }}
+            </div>
+            
+            {% if item.answer and item.answer.transcript %}
+            <div class="msg-bubble msg-user">
+              <span class="sender">Candidate</span>
+              {{ item.answer.transcript }}
+            </div>
+            {% endif %}
+            
+            {% if item.answer and item.answer.code_submitted %}
+            <div class="msg-code">
+              {{ item.answer.code_submitted }}
+            </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="pm-card">
+      <h3>Interview Info</h3>
+      <ul class="bullets info">
+        <li><strong>Session ID:</strong> {{ session.id }}</li>
+        <li><strong>Role:</strong> {{ session.role }}</li>
+        <li><strong>Date:</strong> {{ session.start_time|date:"M d, Y H:i" }}</li>
+        {% if duration %}<li><strong>Duration:</strong> {{ duration }}</li>{% endif %}
+        <li><strong>Stage:</strong> {{ session.stage }}</li>
+        <li><strong>Personality:</strong> {{ session.personality_mode }}</li>
+      </ul>
+      <div class="button-row">
+        <a class="pm-btn" href="{% url 'analytics:overview' %}">All Interviews</a>
+        <button class="pm-btn ghost" onclick="window.print()">Download PDF</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ skills|json_script:"skillsData" }}
+<script>
+const skillsData = JSON.parse(document.getElementById('skillsData').textContent);
+
+function renderOverallRing() {
+  const ctx = document.getElementById('overallRing').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Score', 'Remaining'],
+      datasets: [{
+        data: [{{ overall_score }}, 100 - {{ overall_score }}],
+        backgroundColor: ['#1a73e8', '#e3edfb'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: {legend: {display: false}},
+      responsive: true,
+      maintainAspectRatio: false,
+    }
+  });
+}
+
+function renderRadar() {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: Object.keys(skillsData),
+      datasets: [{
+        label: 'Score',
+        data: Object.values(skillsData),
+        backgroundColor: 'rgba(26,115,232,0.15)',
+        borderColor: '#1a73e8',
+        pointBackgroundColor: '#1a73e8',
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { suggestedMin: 0, suggestedMax: 100 } },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+function copyTranscript() {
+  const text = document.getElementById('transcript').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Transcript copied');
+  });
+}
+
+renderOverallRing();
+renderRadar();
+</script>
+{% endblock %}

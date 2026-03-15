@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+.profile-page { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px 80px; }
+.profile-card {
+    max-width: 520px; width: 100%; background: var(--pm-surface);
+    border-radius: var(--pm-radius-xl); border: 1px solid var(--pm-border-light);
+    padding: 40px; box-shadow: var(--pm-shadow-md);
+}
+.profile-header { text-align: center; margin-bottom: 32px; }
+.profile-avatar-wrap {
+    width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 16px;
+    background: var(--pm-bg); border: 3px solid var(--pm-surface);
+    box-shadow: var(--pm-shadow-sm); display: flex; align-items: center;
+    justify-content: center; font-size: 28px; color: var(--pm-primary); overflow: hidden;
+}
+.profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.profile-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+.profile-header p { font-size: 14px; color: var(--pm-text-secondary); }
+.profile-form { display: flex; flex-direction: column; gap: 20px; }
+.form-group label {
+    display: block; font-size: 13px; font-weight: 600; color: var(--pm-text);
+    margin-bottom: 6px;
+}
+.form-group input, .form-group select {
+    width: 100%; padding: 12px 16px; border-radius: var(--pm-radius-sm);
+    border: 1px solid var(--pm-border); font-family: inherit; font-size: 14px;
+    color: var(--pm-text); background: var(--pm-surface);
+    transition: all var(--pm-transition); outline: none; -webkit-appearance: none;
+}
+.form-group input:focus, .form-group select:focus {
+    border-color: var(--pm-primary); box-shadow: 0 0 0 3px var(--pm-primary-light);
+}
+.file-upload {
+    border: 2px dashed var(--pm-border); border-radius: var(--pm-radius-lg);
+    padding: 32px 24px; text-align: center; position: relative;
+    transition: all var(--pm-transition); cursor: pointer; background: var(--pm-bg);
+}
+.file-upload:hover { border-color: var(--pm-primary); background: var(--pm-primary-light); }
+.file-upload input[type=file] {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+}
+.file-upload-icon { font-size: 36px; color: var(--pm-primary); margin-bottom: 10px; }
+.file-upload p { font-size: 13px; color: var(--pm-text-secondary); }
+.file-upload .file-name { font-size: 14px; font-weight: 500; color: var(--pm-text); margin-top: 6px; }
+.profile-submit {
+    width: 100%; padding: 14px; border-radius: var(--pm-radius-full);
+    background: var(--pm-primary); color: #fff; border: none;
+    font-size: 15px; font-weight: 500; font-family: 'Google Sans', sans-serif;
+    cursor: pointer; transition: all var(--pm-transition);
+    box-shadow: var(--pm-shadow-sm); margin-top: 8px;
+}
+.profile-submit:hover { background: var(--pm-primary-hover); box-shadow: var(--pm-shadow-md); }
+{% endblock %}
+
+{% block content %}
+<!-- Navbar -->
+<nav class="pm-nav">
+    <div class="pm-nav-inner">
+        <a href="/" class="pm-logo">
+            <div class="pm-logo-icon">P</div>
+            <div class="pm-logo-text">Prep<span>Mind</span></div>
+        </a>
+    </div>
+</nav>
+
+<div class="profile-page">
+    <div class="profile-card animate-fadeIn">
+        <div class="profile-header">
+            <div class="profile-avatar-wrap">
+                {% if user.socialaccount_set.all.0.get_avatar_url %}
+                    <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                {% else %}
+                    <span class="material-symbols-rounded" style="font-size:32px">person</span>
+                {% endif %}
+            </div>
+            <h2>Complete Your Profile</h2>
+            <p>{{ user.get_full_name|default:user.username }} · {{ user.email }}</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="profile-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Target Role</label>
+                <input type="text" name="target_role" placeholder="e.g. Backend Developer, Data Scientist" value="{{ user.target_role|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Experience Level</label>
+                <select name="experience_level" required>
+                    <option value="" disabled {% if not user.experience_level %}selected{% endif %}>Select your level</option>
+                    <option value="Intern" {% if user.experience_level == 'Intern' %}selected{% endif %}>Intern / Student</option>
+                    <option value="Junior" {% if user.experience_level == 'Junior' %}selected{% endif %}>Junior (0-2 years)</option>
+                    <option value="Mid" {% if user.experience_level == 'Mid' %}selected{% endif %}>Mid-Level (2-5 years)</option>
+                    <option value="Senior" {% if user.experience_level == 'Senior' %}selected{% endif %}>Senior (5+ years)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Resume (PDF)</label>
+                <div class="file-upload" id="fileWrapper">
+                    <span class="material-symbols-rounded file-upload-icon">upload_file</span>
+                    <p id="filePrompt">Drag & Drop or Click to Browse</p>
+                    <div class="file-name" id="fileName"></div>
+                    <input type="file" name="resume" accept=".pdf" id="resumeInput" {% if not user.resume %}required{% endif %}>
+                </div>
+                {% if user.resume %}
+                    <div style="margin-top:8px;font-size:13px;color:var(--pm-green);display:flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-rounded filled" style="font-size:16px">check_circle</span>
+                        Current: {{ user.resume.name|truncatechars:40 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="profile-submit">
+                Save & Continue to Dashboard
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('resumeInput').addEventListener('change', function(e) {
+    const name = e.target.files[0] ? e.target.files[0].name : '';
+    document.getElementById('fileName').textContent = name;
+    if (name) {
+        document.getElementById('filePrompt').style.display = 'none';
+    } else {
+        document.getElementById('filePrompt').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
