@@ -94,7 +94,7 @@ def handle_response(request, session_id):
                 'status': 'ended',
                 'ai_text': fallback_text,
                 'is_ended': True,
-                'redirect_url': reverse('core:dashboard'),
+                'redirect_url': f'/dashboard/?schedule_session_id={session.id}',
             })
 
         questions = session.questions.order_by('order')
@@ -139,7 +139,7 @@ def handle_response(request, session_id):
                 'status': 'success',
                 'ai_text': end_text,
                 'is_ended': True,
-                'redirect_url': reverse('core:dashboard'),
+                'redirect_url': f'/dashboard/?schedule_session_id={session.id}',
             }
             return JsonResponse(response_data)
 
@@ -238,7 +238,7 @@ def evaluate_coding_round(request, session_id):
                 'status': 'success',
                 'ai_text': feedback_speech + ' ' + feedback_data.get('spoken_text', ''),
                 'is_ended': True,
-                'redirect_url': reverse('core:dashboard'),
+                'redirect_url': f'/dashboard/?schedule_session_id={session.id}',
             })
 
         interaction = generate_next_interaction(
@@ -276,3 +276,71 @@ def evaluate_coding_round(request, session_id):
             'is_ended': False,
         })
 
+
+
+# --- NEW FEATURES ---
+
+import json
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from .models import InterviewSession
+from django.http import JsonResponse
+from .services.google_docs_service import create_interview_report
+
+@login_required
+def schedule_next_interview(request):
+    session_id = request.GET.get('session_id')
+    return render(request, 'interviews/schedule.html', {'session_id': session_id})
+
+@login_required
+@require_POST
+def api_schedule_interview(request):
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', 'PrepMind Mock Interview')
+        date_str = data.get('date')
+        time_str = data.get('time')
+
+        if not date_str or not time_str:
+            return JsonResponse({'success': False, 'error': 'Date and time are required'})
+
+        from .services.google_calendar_service import create_calendar_event
+        event_link, meet_link = create_calendar_event(
+            user=request.user,
+            title=title,
+            date=date_str,
+            time=time_str,
+            role="Interactive Mock"
+        )
+        return JsonResponse({'success': True, 'event_link': event_link, 'meet_link': meet_link})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_POST
+def api_create_doc_report(request):
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
+
+        # Basic report content from the session
+        transcript = session.ai_feedback if session.ai_feedback else "No feedback available."
+        
+        doc_link = create_interview_report(
+            user=request.user,
+            candidate_name=request.user.get_full_name() or request.user.username,
+            role=session.role,
+            date=str(session.created_at.date()),
+            transcript=transcript,
+            scores=session.communication_score or "Not scored",
+            strengths="Strengths determined by AI.",
+            weaknesses="Areas to improve determined by AI.",
+            improvement_plan="Practice mock sessions."
+        )
+        return JsonResponse({'success': True, 'doc_link': doc_link})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

@@ -291,9 +291,225 @@
                     </div>
                 </div>
             </div>
+
+            <!-- PIXEL CALENDAR CARD (Sidebar style) -->
+            <style>
+            .g-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+            .g-cal-day {
+                aspect-ratio: 1;
+                border-radius: 6px;
+                background: var(--pm-bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                color: var(--pm-text-secondary);
+                position: relative;
+                cursor: default;
+                transition: transform 0.2s;
+            }
+            .g-cal-day.active { background: var(--pm-green); color: white; cursor: pointer; }
+            .g-cal-day.active:hover { transform: scale(1.1); }
+            .g-cal-tooltip {
+                display: none;
+                position: absolute;
+                bottom: 110%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--pm-surface);
+                color: var(--pm-text);
+                padding: 8px 12px;
+                border-radius: var(--pm-radius-sm);
+                border: 1px solid var(--pm-border-light);
+                font-size: 11px;
+                width: max-content;
+                z-index: 10;
+                box-shadow: var(--pm-shadow-md);
+            }
+            .g-cal-day.active:hover .g-cal-tooltip { display: block; }
+            .g-cal-day.scheduled {
+                background: #fef7e0 !important;
+                color: #b06000 !important;
+                border: 1px solid #fbbc04;
+                font-weight: 600;
+            }
+
+            </style>
+
+            <div class="pm-card sidebar-card" style="margin-top: 0;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+                    <span class="material-symbols-rounded" style="color:var(--pm-primary);font-size:20px">calendar_month</span>
+                    <h3 style="font-size:16px;font-weight:500;">Interview Activity</h3>
+                </div>
+                <div class="g-cal-grid" id="calendarGrid"></div>
+            </div>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const grid = document.getElementById('calendarGrid');
+                if(!grid) return;
+                const daysInMonth = 31;
+                
+                const mockActiveDays = {
+                    12: { role: 'Software Engineer', score: '85/100', date: 'March 12, 2026' },
+                    14: { role: 'Frontend Developer', score: '92/100', date: 'March 14, 2026' },
+                    28: { role: 'Data Scientist', score: 'Pending', date: 'March 28, 2026' },
+                    30: { role: 'System Design', score: 'Scheduled', scheduled: true, date: 'March 30, 2026' }
+                };
+
+                for(let i=1; i<=daysInMonth; i++) {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'g-cal-day';
+                    dayDiv.innerText = i;
+                    
+                    if(mockActiveDays[i]) {
+                        if (mockActiveDays[i].score === 'Pending' || mockActiveDays[i].scheduled) {
+                        dayDiv.classList.add('scheduled');
+                    } else {
+                        dayDiv.classList.add('active');
+                    }
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'g-cal-tooltip';
+                        tooltip.innerHTML = `<strong>${mockActiveDays[i].role}</strong><br/>Score: ${mockActiveDays[i].score}<br/>${mockActiveDays[i].date}`;
+                        dayDiv.appendChild(tooltip);
+                    }
+                    grid.appendChild(dayDiv);
+                }
+            });
+            </script>
+            <!-- /PIXEL CALENDAR CARD -->
         </div>
     </div>
+
+
+
 </main>
+
+    <!-- SCHEDULE MODAL -->
+    <div id="scheduleModalOverlay" class="pixel-modal-overlay">
+        <div class="pixel-schedule-modal">
+            <button class="pixel-close-btn" id="closeScheduleModal"><span class="material-symbols-rounded">close</span></button>
+            <h2 style="margin-top:0; font-size:24px; font-weight:500; font-family:'Google Sans', sans-serif;">Next meeting?</h2>
+            <p style="color:var(--pm-text-secondary); margin-bottom: 24px;">Schedule your next mock interview session.</p>
+            
+            <form id="dashboardScheduleForm">
+                <input type="text" id="schedTitle" class="pixel-input" placeholder="Title (e.g., Technical Round)" value="Technical Round 2" required>
+                <input type="date" id="schedDate" class="pixel-input" required>
+                <input type="time" id="schedTime" class="pixel-input" required>
+                <button type="submit" class="pixel-btn" id="schedBtn">Add to calendar</button>
+            </form>
+            <div id="schedResult" style="margin-top: 16px;"></div>
+        </div>
+    </div>
+
+    <style>
+    .pixel-modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        z-index: 9999; display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .pixel-modal-overlay.show { opacity: 1; pointer-events: auto; }
+    .pixel-schedule-modal {
+        background: white; border-radius: 28px; padding: 32px; width: 90%; max-width: 420px;
+        box-shadow: 0 24px 48px rgba(0,0,0,0.2); position: relative;
+        transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .pixel-modal-overlay.show .pixel-schedule-modal { transform: translateY(0); }
+    
+    .pixel-close-btn {
+        position: absolute; top: 20px; right: 20px;
+        background: #fce8e6; color: #c5221f; border: none;
+        width: 36px; height: 36px; border-radius: 50%;
+        font-size: 20px; cursor: pointer; display: flex;
+        align-items: center; justify-content: center; transition: 0.2s;
+        text-decoration: none;
+    }
+    .pixel-close-btn:hover { background: #fad2cf; }
+    
+    .pixel-input {
+        width: 100%; border: 2px solid #f1f3f4; border-radius: 12px;
+        padding: 14px 16px; margin-bottom: 16px; font-size: 16px;
+        background: #f8f9fa; transition: 0.2s; font-family: inherit;
+        box-sizing: border-box;
+    }
+    .pixel-input:focus { border-color: #1a73e8; outline: none; background: white; }
+    
+    .pixel-btn {
+        width: 100%; padding: 14px; border-radius: 100px;
+        background: #d3e3fd; color: #0b57d0; border: none; font-weight: 600;
+        font-size: 16px; cursor: pointer; transition: 0.2s; font-family: inherit;
+    }
+    .pixel-btn:hover { background: #b8d0fa; }
+    </style>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const schedSessionId = urlParams.get('schedule_session_id');
+        const modal = document.getElementById('scheduleModalOverlay');
+        const closeBtn = document.getElementById('closeScheduleModal');
+        const schedForm = document.getElementById('dashboardScheduleForm');
+        
+        if (schedSessionId) {
+            modal.classList.add('show');
+            // Remove from URL so a refresh doesn't trigger it again
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Default date/time logic (Tomorrow 10:00 AM)
+            const now = new Date();
+            now.setDate(now.getDate() + 1);
+            document.getElementById('schedDate').value = now.toISOString().split('T')[0];
+            document.getElementById('schedTime').value = '10:00';
+        }
+        
+        const closeModal = () => {
+            modal.classList.remove('show');
+        };
+        
+        closeBtn.addEventListener('click', closeModal);
+        
+        schedForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('schedBtn');
+            btn.textContent = 'Scheduling...';
+            btn.disabled = true;
+            
+            fetch('/interviews/api/schedule-interview/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    session_id: schedSessionId || '1',
+                    date: document.getElementById('schedDate').value,
+                    time: document.getElementById('schedTime').value,
+                    notes: document.getElementById('schedTitle').value
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    btn.textContent = 'Scheduled!';
+                    btn.style.background = '#c4eed0';
+                    btn.style.color = '#0d652d';
+                    setTimeout(closeModal, 1500); // Close after 1.5s
+                } else {
+                    document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Failed: ${data.error || 'Unknown'}</span>`;
+                    btn.textContent = 'Add to calendar';
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Error scheduling.</span>`;
+                btn.textContent = 'Add to calendar';
+                btn.disabled = false;
+            });
+        });
+    });
+    </script>
+
 {% endblock %}
 
 {% block extra_js %}
