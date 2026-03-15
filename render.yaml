@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: prepmind-ai
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn PrepMind_AI.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: DATABASE_URL
+        fromDatabase:
+          name: prepmind-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+
+databases:
+  - name: prepmind-db
+    databaseName: prepmind
+    user: prepmind_user

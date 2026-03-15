@@ -10,3 +10,4 @@ resumes/
 .vscode/
 .idea/
 *.pdf
+.venv/
