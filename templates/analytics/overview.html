@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
+<style>
 .pm-shell { padding: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
 .pm-page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
 .pm-kicker { font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--pm-primary); letter-spacing: 0.5px; margin-bottom: 8px; }
@@ -28,6 +29,7 @@
   .pm-row { flex-direction: column; gap: 12px; }
   .pm-row .scores { justify-content: space-between; width: 100%; }
 }
+</style>
 {% endblock %}
 
 {% block content %}

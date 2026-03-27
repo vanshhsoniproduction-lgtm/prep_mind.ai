@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
@@ -34,6 +35,11 @@ def _resume_context_for_user(user) -> str:
 @login_required
 def start_interview(request):
     if request.method == 'POST':
+        # Check for credits
+        if request.user.interview_credits <= 0:
+            messages.warning(request, "You have run out of interview credits. Please top up to continue.")
+            return redirect('payments:pricing')
+            
         role = request.user.target_role or 'Software Engineer'
         experience_level = request.user.experience_level or 'Mid-Level'
         company = 'Google'
@@ -49,6 +55,10 @@ def start_interview(request):
             stage='tech1',
             question_count=1
         )
+        
+        # Deduct credit
+        request.user.interview_credits -= 1
+        request.user.save()
 
         try:
             ai_text = generate_initial_question(role, company, personality, experience_level, resume_context)
@@ -133,7 +143,6 @@ def handle_response(request, session_id):
             session.end_time = timezone.now()
             session.save()
             
-            end_text = feedback_data.get('spoken_text', 'Thank you!')
             response_data = {
                 'success': True,
                 'status': 'success',
@@ -141,6 +150,8 @@ def handle_response(request, session_id):
                 'is_ended': True,
                 'redirect_url': f'/dashboard/?schedule_session_id={session.id}',
             }
+            session.status = 'COMPLETED'
+            session.save()
             return JsonResponse(response_data)
 
         exp_level = request.user.experience_level or 'Mid-Level'
@@ -328,13 +339,13 @@ def api_create_doc_report(request):
         session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
 
         # Basic report content from the session
-        transcript = session.ai_feedback if session.ai_feedback else "No feedback available."
+        transcript = session.feedback_text if session.feedback_text else "No feedback available."
         
         doc_link = create_interview_report(
             user=request.user,
             candidate_name=request.user.get_full_name() or request.user.username,
             role=session.role,
-            date=str(session.created_at.date()),
+            date=str(session.start_time.date()),
             transcript=transcript,
             scores=session.communication_score or "Not scored",
             strengths="Strengths determined by AI.",
@@ -344,3 +355,63 @@ def api_create_doc_report(request):
         return JsonResponse({'success': True, 'doc_link': doc_link})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+@login_required
+def get_candidate_details(request, user_id):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    try:
+        user = User.objects.get(id=user_id)
+        sessions = InterviewSession.objects.filter(user=user, technical_score__isnull=False).order_by('start_time')
+        
+        history = [{
+            'date': s.start_time.strftime('%b %d'),
+            'tech': s.technical_score,
+            'comm': s.communication_score,
+            'conf': s.confidence_score or 70,
+            'role': s.role
+        } for s in sessions]
+        
+        latest = sessions.last()
+        feedback = {
+            'strengths': "Problem solving, System design" if not latest else "Analytical thinking",
+            'improvements': "Time complexity, Communication" if not latest else "Edge cases"
+        }
+
+        badges = []
+        if sessions.count() >= 5: badges.append('Consistent')
+        if any(s.technical_score >= 90 for s in sessions): badges.append('Expert')
+        
+        resume_url = user.resume.url if user.resume and hasattr(user.resume, 'url') else None
+        
+        return JsonResponse({
+            'success': True,
+            'username': user.username,
+            'role': user.target_role or "Full Stack Developer",
+            'level': user.experience_level or "Junior",
+            'resume_url': resume_url,
+            'history': history,
+            'total_interviews': sessions.count(),
+            'feedback': feedback,
+            'badges': badges
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@csrf_exempt
+def cancel_session(request, session_id):
+    if request.method == 'POST':
+        try:
+            from django.utils import timezone
+            session = InterviewSession.objects.get(id=session_id, user=request.user)
+            session.status = 'CANCELLED_BY_USER'
+            session.end_time = timezone.now()
+            session.technical_score = None
+            session.communication_score = None
+            session.confidence_score = None
+            session.stage = 'ended'
+            session.save()
+            return JsonResponse({'success': True, 'redirect_url': f'/dashboard/?schedule_session_id={session.id}'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    return JsonResponse({'success': False}, status=400)

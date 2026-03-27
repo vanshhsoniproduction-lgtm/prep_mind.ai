@@ -20,19 +20,35 @@ def setup_profile(request):
         
     return render(request, 'accounts/setup_profile.html')
 
-import uuid
-from django.contrib.auth import login
-from django.urls import reverse
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
 
 def guest_login(request):
     if request.method == 'POST':
-        guest_uuid = str(uuid.uuid4())[:8]
-        username = f"guest_{guest_uuid}"
-        user = CustomUser.objects.create(username=username)
-        # Random password just in case
-        user.set_unusable_password()
-        user.save()
-        # Log the user in
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('core:dashboard')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, "Username and password are required.")
+            return redirect('core:index')
+            
+        user = CustomUser.objects.filter(username=username).first()
+        
+        if user:
+            # Try to login
+            authenticated_user = authenticate(request, username=username, password=password)
+            if authenticated_user:
+                login(request, authenticated_user, backend='django.contrib.auth.backends.ModelBackend')
+                return redirect('core:dashboard')
+            else:
+                messages.error(request, "Invalid password for this guest name. Please try another.")
+                return redirect('core:index')
+        else:
+            # Create new guest user
+            user = CustomUser.objects.create_user(username=username, password=password)
+            user.save()
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f"Welcome {username}! Your guest account has been created.")
+            return redirect('core:dashboard')
+            
     return redirect('core:index')

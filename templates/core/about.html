@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us | PrepMind AI{% endblock %}
+
+{% block content %}
+<section style="padding: 100px 0;">
+    <div class="pm-container">
+        <h1 style="font-size: 48px; margin-bottom: 32px; text-align: center;">Mission to empower engineers.</h1>
+        <div class="pm-card animate-fadeIn" style="max-width: 800px; margin: 0 auto; line-height: 1.8;">
+            <p style="font-size: 18px; color: var(--pm-text-secondary); margin-bottom: 24px;">
+                PrepMind AI was founded on the belief that technical interviews shouldn't be a black box of anxiety. Our mission is to democratize high-quality interview preparation through the power of Generative AI.
+            </p>
+            <p style="font-size: 18px; color: var(--pm-text-secondary); margin-bottom: 24px;">
+                By combining state-of-the-art Large Language Models with professional coaching methodologies, we've built a platform that provides real-time, interactive coding and behavioral interview practice.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 48px;">
+                <div>
+                    <h3 style="margin-bottom: 16px;">Our Reality</h3>
+                    <p style="font-size: 14px; color: var(--pm-text-secondary);">Thousands of mock sessions completed by candidates from top tier tech companies.</p>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 16px;">Our Tech</h3>
+                    <p style="font-size: 14px; color: var(--pm-text-secondary);">Powered by Gemini Pro and ElevenLabs for realistic voice interactions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -11,7 +11,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('user/', include('accounts.urls')),
-    path('interviews/', include('interviews.urls')),
+    path('interviews/', include('interviews.urls', namespace='interviews')),
+    path('payments/', include('payments.urls', namespace='payments')),
     path('analytics/', include('analytics.urls')),
     path('', include('core.urls')),
 ]

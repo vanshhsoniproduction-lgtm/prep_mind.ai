@@ -11,4 +11,6 @@ urlpatterns = [
     path('schedule-next-interview/', views.schedule_next_interview, name='schedule_next_interview'),
     path('api/schedule-interview/', views.api_schedule_interview, name='api_schedule_interview'),
     path('api/create-doc-report/', views.api_create_doc_report, name='api_create_doc_report'),
+    path('api/cancel/<int:session_id>/', views.cancel_session, name='cancel_session'),
+    path('api/candidate/<int:user_id>/', views.get_candidate_details, name='candidate_details'),
 ]

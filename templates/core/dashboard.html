@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | PrepMind AI{% endblock %}
 
 {% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
 .dash-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
 .dash-welcome h1 { font-size: 32px; font-weight: 600; margin-bottom: 6px; }
 .dash-welcome p { color: var(--pm-text-secondary); font-size: 16px; }
@@ -37,204 +42,117 @@
 .score-badge .value { font-size: 18px; font-weight: 600; }
 .score-badge .value.blue { color: var(--pm-primary); }
 .score-badge .value.green { color: var(--pm-green); }
-.score-badge .value.purple { color: #7c3aed; }
-.feedback-box {
-    margin-top: 12px; padding: 14px 16px; background: var(--pm-bg);
-    border-radius: var(--pm-radius-sm); border: 1px solid var(--pm-border-light);
+
+/* Weekly Progress */
+.weekly-progress { display: flex; gap: 6px; margin-top: 12px; }
+.progress-segment { flex: 1; height: 10px; border-radius: 5px; background: var(--pm-bg); border: 1px solid var(--pm-border-light); transition: 0.3s; }
+.progress-segment.filled { background: var(--pm-primary); border-color: var(--pm-primary); }
+.progress-star { position: absolute; right: 0; top: -12px; color: #fbbc04; font-size: 20px; animation: bounce 1s infinite; }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+/* Status Indicators */
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-completed { background: #34A853; box-shadow: 0 0 10px rgba(52, 168, 83, 0.3); }
+.status-cancelled { background: #ea4335; box-shadow: 0 0 10px rgba(234, 67, 53, 0.3); }
+.status-aborted { background: #fbbc04; box-shadow: 0 0 10px rgba(251, 188, 4, 0.3); }
+
+/* Leaderboard */
+.lb-card { padding: 20px; background: white; border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light); }
+.lb-rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: #f8f9fa; color: #5f6368; }
+.lb-rank.gold { background: #fff7e0; color: #b06000; }
+.lb-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
+.lb-item:last-child { border: none; }
+
+/* Modal Common */
+.pixel-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: 0.3s;
 }
-.feedback-box h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); margin-bottom: 6px; font-weight: 600; }
-.feedback-box p { font-size: 13px; color: var(--pm-text-secondary); line-height: 1.6; }
-.sidebar-card { display: flex; flex-direction: column; gap: 18px; }
-.sidebar-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--pm-text-disabled); font-weight: 600; margin-bottom: 4px; }
-.sidebar-field .val { font-size: 15px; font-weight: 500; color: var(--pm-text); }
-.sidebar-field .val.success { color: var(--pm-green); }
-.sidebar-field .val.error { color: var(--pm-red); }
-.progress-bar-bg { height: 6px; background: var(--pm-border-light); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-.progress-bar-fill { height: 100%; background: var(--pm-primary); border-radius: 3px; transition: width .6s ease; }
-.empty-state { text-align: center; padding: 48px 24px; }
-.empty-state .material-symbols-rounded { font-size: 48px; color: var(--pm-border); margin-bottom: 12px; }
-.empty-state h3 { font-size: 16px; margin-bottom: 6px; }
-.empty-state p { font-size: 14px; color: var(--pm-text-secondary); }
-/* Profile dropdown */
-.profile-toggle {
-    width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent;
-    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
-    justify-content: center; cursor: pointer; font-weight: 600; font-size: 16px;
-    transition: all var(--pm-transition); overflow: hidden;
+.pixel-modal-overlay.show { opacity: 1; visibility: visible; }
+.modal-content-box {
+    background: white; border-radius: 32px; padding: 40px; width: 95%; max-width: 500px;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.15); transform: scale(0.9); transition: 0.3s;
+    position: relative;
 }
-.profile-toggle:hover { border-color: var(--pm-primary-surface); }
-.profile-toggle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.profile-dropdown {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 280px;
-    background: var(--pm-surface); border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light);
-    box-shadow: var(--pm-shadow-lg); opacity: 0; visibility: hidden;
-    transform: translateY(-8px) scale(.97); transition: all var(--pm-transition);
-    overflow: hidden; z-index: 200;
-}
-.profile-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
-.profile-dropdown-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--pm-border-light); }
-.profile-dropdown-avatar {
-    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
-    background: var(--pm-primary); color: #fff; display: flex; align-items: center;
-    justify-content: center; font-size: 22px; font-weight: 600; overflow: hidden;
-}
-.profile-dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.profile-dropdown-header h4 { font-size: 16px; font-weight: 500; }
-.profile-dropdown-header p { font-size: 13px; color: var(--pm-text-secondary); }
-.profile-dropdown-links a, .profile-dropdown-links button {
-    display: flex; align-items: center; gap: 10px; padding: 12px 20px; width: 100%;
-    font-size: 14px; color: var(--pm-text); background: none; border: none;
-    cursor: pointer; font-family: inherit; transition: background var(--pm-transition);
-    text-decoration: none;
-}
-.profile-dropdown-links a:hover, .profile-dropdown-links button:hover { background: var(--pm-bg); }
-.profile-dropdown-links .logout-btn { color: var(--pm-red); }
-@media (max-width: 900px) {
-    .dash-layout { grid-template-columns: 1fr; }
-}
+.modal-content-box.wide { max-width: 800px; }
+.pixel-modal-overlay.show .modal-content-box { transform: scale(1); }
+
+.lb-modal-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f1f3f4; cursor: pointer; transition: 0.2s; }
+.lb-modal-item:hover { background: #f8f9fa; transform: translateX(4px); }
+.lb-modal-item:last-child { border: none; }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Navbar -->
-<nav class="pm-nav">
-    <div class="pm-nav-inner">
-        <a href="{% url 'core:dashboard' %}" class="pm-logo">
-            <div class="pm-logo-icon">P</div>
-            <div class="pm-logo-text">Prep<span>Mind</span></div>
-        </a>
-
-        <div style="display:flex;align-items:center;gap:16px;">
-            <div style="position:relative" id="profWrap">
-                <div class="profile-toggle" id="gProfileToggle">
-                    {% if user.socialaccount_set.all.0.get_avatar_url %}
-                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
-                    {% else %}
-                        {{ user.first_name|first|default:user.username|first|upper }}
-                    {% endif %}
-                </div>
-                <div class="profile-dropdown" id="profileDropdown">
-                    <div class="profile-dropdown-header">
-                        <div class="profile-dropdown-avatar">
-                            {% if user.socialaccount_set.all.0.get_avatar_url %}
-                                <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
-                            {% else %}
-                                {{ user.first_name|first|default:user.username|first|upper }}
-                            {% endif %}
-                        </div>
-                        <h4>{{ user.get_full_name|default:user.username }}</h4>
-                        <p>{{ user.email }}</p>
-                    </div>
-                    <div class="profile-dropdown-links">
-                        <a href="{% url 'accounts:setup_profile' %}">
-                            <span class="material-symbols-rounded" style="font-size:18px">edit</span> Edit Profile
-                        </a>
-                        <form action="{% url 'account_logout' %}" method="post" style="margin:0">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">
-                                <span class="material-symbols-rounded" style="font-size:18px">logout</span> Sign out
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</nav>
-
 <main class="pm-container" style="padding-top:40px;padding-bottom:60px;">
     <!-- Welcome -->
     <div class="dash-welcome" style="margin-bottom:32px;">
-        <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
-        <p>Your personal AI prep dashboard. Let's get you ready for the next big role.</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h1>Welcome, {{ user.first_name|default:user.username }}</h1>
+                <p>Your personal AI prep dashboard. Let's get you ready.</p>
+            </div>
+            <div class="pm-card" style="padding: 12px 20px; background: var(--pm-primary-light); border: 1px solid var(--pm-primary-surface);">
+                <div style="font-size: 12px; font-weight: 600; color: var(--pm-primary); text-transform: uppercase;">Interview Credits</div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--pm-text);">{{ user.interview_credits }} sessions</div>
+            </div>
+        </div>
     </div>
 
     <div class="dash-layout">
         <!-- Main Column -->
         <div style="display:flex;flex-direction:column;gap:24px;">
-            <!-- Start Interview Card -->
             <div class="start-card animate-fadeIn">
                 <div class="start-title">
                     <span class="material-symbols-rounded">auto_awesome</span>
-                    Ready for a new Mock Interview?
+                    New Mock Interview?
                 </div>
-                <p>
-                    Experience a realistic, dynamic voice conversation customized for a
-                    <strong>{{ user.target_role|default:"General Role" }}</strong> position.
-                    Receive instant feedback and tailored insights.
-                </p>
+                <p>Customized for <strong>{{ user.target_role|default:"General Role" }}</strong>.</p>
                 <div class="start-actions">
                     <form method="POST" action="{% url 'interviews:start' %}" style="margin:0">
                         {% csrf_token %}
-                        <button type="submit" class="pm-btn pm-btn-primary">
-                            <span class="material-symbols-rounded" style="font-size:18px">mic</span>
-                            Start Interview
-                        </button>
+                        <button type="submit" class="pm-btn pm-btn-primary">Start Interview</button>
                     </form>
-                    <a href="{% url 'accounts:setup_profile' %}" class="pm-btn pm-btn-outline">
-                        <span class="material-symbols-rounded" style="font-size:18px">tune</span>
-                        Customize Session
-                    </a>
+                    <a href="{% url 'accounts:setup_profile' %}" class="pm-btn pm-btn-outline">Customize</a>
                 </div>
             </div>
 
             <!-- Recent Activity -->
             <div class="pm-card" style="padding:0;overflow:hidden;">
-                <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light);display:flex;align-items:center;justify-content:space-between;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="material-symbols-rounded" style="color:var(--pm-text-secondary);font-size:20px">history</span>
-                        <h3 style="font-size:16px;font-weight:500;">Recent Activity</h3>
-                    </div>
-                    <a href="{% url 'analytics:overview' %}" style="font-size: 13px; font-weight: 500; color: var(--pm-primary); text-decoration: none; display: flex; align-items: center; gap: 4px;">View Analytics <span class="material-symbols-rounded" style="font-size: 16px;">arrow_forward</span></a>
+                <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light);">
+                    <h3 style="font-size:16px;font-weight:500;">Recent Activity</h3>
                 </div>
                 <div style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
                     {% if recent_interviews %}
                         {% for interview in recent_interviews %}
                         <a href="{% url 'analytics:session_detail' interview.id %}" style="text-decoration: none; color: inherit;">
-                        <div class="interview-item animate-fadeIn" style="animation-delay:{{ forloop.counter0 }}00ms;">
+                        <div class="interview-item">
                             <div class="interview-left">
-                                <div class="interview-icon">
-                                    <span class="material-symbols-rounded">work</span>
-                                </div>
+                                <div class="interview-icon"><span class="material-symbols-rounded">work</span></div>
                                 <div class="interview-meta">
                                     <h4>{{ interview.role|title }}</h4>
                                     <p>
-                                        {{ interview.start_time|date:"M d, Y" }}
-                                        <span style="color:var(--pm-border)">·</span>
-                                        <span class="pm-chip" style="background:var(--pm-bg);border:1px solid var(--pm-border-light);font-size:11px;padding:2px 8px;">
-                                            {{ interview.get_stage_display|default:interview.stage|title }}
-                                        </span>
+                                        {{ interview.start_time|date:"M d" }}
+                                        <span class="status-dot {% if interview.status == 'COMPLETED' %}status-completed{% elif interview.status == 'CANCELLED_BY_USER' %}status-cancelled{% else %}status-aborted{% endif %}"></span>
+                                        {{ interview.get_status_display }}
                                     </p>
                                 </div>
                             </div>
                             <div class="interview-scores">
-                                <div class="score-badge">
-                                    <span class="label">Tech</span>
-                                    <span class="value blue">{{ interview.technical_score|default:"--" }}</span>
-                                </div>
-                                <div class="score-badge">
-                                    <span class="label">Comm</span>
-                                    <span class="value green">{{ interview.communication_score|default:"--" }}</span>
-                                </div>
-                                <div class="score-badge">
-                                    <span class="label">Conf</span>
-                                    <span class="value purple">{{ interview.confidence_score|default:"--" }}</span>
-                                </div>
+                                {% if interview.status == 'COMPLETED' %}
+                                <div class="score-badge"><span class="label">Tech</span><span class="value blue">{{ interview.technical_score }}</span></div>
+                                <div class="score-badge"><span class="label">Comm</span><span class="value green">{{ interview.communication_score }}</span></div>
+                                {% else %}
+                                <div style="font-size:11px; color:var(--pm-text-disabled); font-style:italic;">No results</div>
+                                {% endif %}
                             </div>
                         </div>
-                        {% if interview.feedback_text %}
-                        <div class="feedback-box animate-fadeIn" style="margin-top:-4px;margin-bottom:4px;">
-                            <h5><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;margin-right:4px">description</span> AI Feedback</h5>
-                            <p>{{ interview.feedback_text }}</p>
-                        </div>
-                        {% endif %}
                         </a>
                         {% endfor %}
                     {% else %}
-                        <div class="empty-state">
-                            <span class="material-symbols-rounded">add_circle</span>
-                            <h3>No past interviews</h3>
-                            <p>Click "Start Interview" above to begin your first session.</p>
-                        </div>
+                        <p style="text-align:center; padding:20px; color:var(--pm-text-disabled);">No interviews yet.</p>
                     {% endif %}
                 </div>
             </div>
@@ -242,290 +160,304 @@
 
         <!-- Sidebar -->
         <div style="display:flex;flex-direction:column;gap:24px;">
-            <!-- Preparation Focus -->
-            <div class="pm-card sidebar-card">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-                    <span class="material-symbols-rounded" style="color:var(--pm-red);font-size:20px">target</span>
-                    <h3 style="font-size:16px;font-weight:500;">Preparation Focus</h3>
+            <div class="pm-card" style="padding: 24px;">
+                <div style="position:relative;">
+                    <h3 style="font-size:15px; font-weight:600;">Weekly Activity</h3>
+                    {% if weekly_count >= 7 %}<span class="material-symbols-rounded progress-star">grade</span>{% endif %}
                 </div>
-                <div class="sidebar-field">
-                    <label>Target Role</label>
-                    <div class="val">{{ user.target_role|default:"Not set" }}</div>
+                <div class="weekly-progress">
+                    {% for i in "1234567" %}
+                        <div class="progress-segment {% if forloop.counter <= weekly_count %}filled{% endif %}"></div>
+                    {% endfor %}
                 </div>
-                <div class="sidebar-field">
-                    <label>Experience Level</label>
-                    <div class="val">{{ user.experience_level|default:"Not set" }}</div>
+                <p style="font-size:12px; margin-top:12px;">{{ weekly_count }} of 7 interviews completed.</p>
+            </div>
+
+            <div class="lb-card">
+                <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">Top Candidates</h3>
+                {% for top_user in leaderboard %}
+                <div class="lb-item">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="lb-rank {% if forloop.first %}gold{% endif %}">{{ forloop.counter }}</div>
+                        <div style="font-size:14px; font-weight:600;">{{ top_user.username }}</div>
+                    </div>
+                    <div style="font-size:14px; font-weight:700; color:var(--pm-primary);">{{ top_user.avg_score|floatformat:1 }}</div>
                 </div>
-                <div class="sidebar-field">
-                    <label>Resume Status</label>
-                    {% if user.resume %}
-                        <div class="val success" style="display:flex;align-items:center;gap:6px;">
-                            <span class="material-symbols-rounded filled" style="font-size:16px">check_circle</span> Uploaded
+                {% empty %}
+                <div style="text-align:center; padding:12px; color:var(--pm-text-disabled); font-size:13px;">No rankings yet</div>
+                {% endfor %}
+
+                <div style="margin-top:20px; padding-top:16px; border-top:1px dashed var(--pm-border);">
+                    {% if user_rank %}
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--pm-primary-light); padding:10px 14px; border-radius:12px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="font-size:13px; font-weight:700; color:var(--pm-primary);">#{{ user_rank }}</div>
+                                <div style="font-size:13px; font-weight:600;">Your Position</div>
+                            </div>
+                            <div style="font-size:13px; font-weight:700;">{{ user_avg_score|floatformat:1 }}</div>
                         </div>
                     {% else %}
-                        <div class="val error" style="display:flex;align-items:center;gap:6px;">
-                            <span class="material-symbols-rounded" style="font-size:16px">cancel</span> Not uploaded
-                        </div>
+                        <p style="font-size:11px; color:var(--pm-text-secondary); text-align:center;">
+                            Finish your first interview to join the rankings!
+                        </p>
                     {% endif %}
                 </div>
-                <a href="{% url 'accounts:setup_profile' %}" style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:4px;margin-top:4px;">
-                    Update Profile <span class="material-symbols-rounded" style="font-size:16px">arrow_forward</span>
-                </a>
+
+                <button onclick="document.getElementById('leaderboardModal').classList.add('show')" class="pm-btn pm-btn-outline" style="width:100%; margin-top:20px; font-size:12px;">View More Results</button>
+                <a href="{% url 'payments:pricing' %}" class="pm-btn pm-btn-primary" style="width:100%; margin-top:10px; justify-content:center;">Get More Credits</a>
             </div>
-
-            <!-- Weekly Progress -->
-            <div class="pm-card sidebar-card">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-                    <span class="material-symbols-rounded" style="color:var(--pm-yellow);font-size:20px">bar_chart</span>
-                    <h3 style="font-size:16px;font-weight:500;">Weekly Progress</h3>
-                </div>
-                <div>
-                    <div style="font-size:28px;font-weight:600;color:var(--pm-text);">
-                        {% if recent_interviews %}{{ recent_interviews|length }}{% else %}0{% endif %}<span style="font-size:16px;color:var(--pm-text-secondary);font-weight:400">/3</span>
-                    </div>
-                    <div style="font-size:13px;color:var(--pm-text-secondary);margin-top:2px;">
-                        Completed mock interviews this week. Aim for 3 to stay sharp.
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill" style="width: {% if recent_interviews %}{% widthratio recent_interviews|length 3 100 %}%{% else %}0%{% endif %};"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PIXEL CALENDAR CARD (Sidebar style) -->
-            <style>
-            .g-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
-            .g-cal-day {
-                aspect-ratio: 1;
-                border-radius: 6px;
-                background: var(--pm-bg);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 12px;
-                color: var(--pm-text-secondary);
-                position: relative;
-                cursor: default;
-                transition: transform 0.2s;
-            }
-            .g-cal-day.active { background: var(--pm-green); color: white; cursor: pointer; }
-            .g-cal-day.active:hover { transform: scale(1.1); }
-            .g-cal-tooltip {
-                display: none;
-                position: absolute;
-                bottom: 110%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--pm-surface);
-                color: var(--pm-text);
-                padding: 8px 12px;
-                border-radius: var(--pm-radius-sm);
-                border: 1px solid var(--pm-border-light);
-                font-size: 11px;
-                width: max-content;
-                z-index: 10;
-                box-shadow: var(--pm-shadow-md);
-            }
-            .g-cal-day.active:hover .g-cal-tooltip { display: block; }
-            .g-cal-day.scheduled {
-                background: #fef7e0 !important;
-                color: #b06000 !important;
-                border: 1px solid #fbbc04;
-                font-weight: 600;
-            }
-
-            </style>
-
-            <div class="pm-card sidebar-card" style="margin-top: 0;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-                    <span class="material-symbols-rounded" style="color:var(--pm-primary);font-size:20px">calendar_month</span>
-                    <h3 style="font-size:16px;font-weight:500;">Interview Activity</h3>
-                </div>
-                <div class="g-cal-grid" id="calendarGrid"></div>
-            </div>
-
-            <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const grid = document.getElementById('calendarGrid');
-                if(!grid) return;
-                const daysInMonth = 31;
-                
-                const mockActiveDays = {
-                    12: { role: 'Software Engineer', score: '85/100', date: 'March 12, 2026' },
-                    14: { role: 'Frontend Developer', score: '92/100', date: 'March 14, 2026' },
-                    28: { role: 'Data Scientist', score: 'Pending', date: 'March 28, 2026' },
-                    30: { role: 'System Design', score: 'Scheduled', scheduled: true, date: 'March 30, 2026' }
-                };
-
-                for(let i=1; i<=daysInMonth; i++) {
-                    const dayDiv = document.createElement('div');
-                    dayDiv.className = 'g-cal-day';
-                    dayDiv.innerText = i;
-                    
-                    if(mockActiveDays[i]) {
-                        if (mockActiveDays[i].score === 'Pending' || mockActiveDays[i].scheduled) {
-                        dayDiv.classList.add('scheduled');
-                    } else {
-                        dayDiv.classList.add('active');
-                    }
-                        const tooltip = document.createElement('div');
-                        tooltip.className = 'g-cal-tooltip';
-                        tooltip.innerHTML = `<strong>${mockActiveDays[i].role}</strong><br/>Score: ${mockActiveDays[i].score}<br/>${mockActiveDays[i].date}`;
-                        dayDiv.appendChild(tooltip);
-                    }
-                    grid.appendChild(dayDiv);
-                }
-            });
-            </script>
-            <!-- /PIXEL CALENDAR CARD -->
         </div>
     </div>
-
-
-
 </main>
 
-    <!-- SCHEDULE MODAL -->
-    <div id="scheduleModalOverlay" class="pixel-modal-overlay">
-        <div class="pixel-schedule-modal">
-            <button class="pixel-close-btn" id="closeScheduleModal"><span class="material-symbols-rounded">close</span></button>
-            <h2 style="margin-top:0; font-size:24px; font-weight:500; font-family:'Google Sans', sans-serif;">Next meeting?</h2>
-            <p style="color:var(--pm-text-secondary); margin-bottom: 24px;">Schedule your next mock interview session.</p>
+<!-- Leaderboard View More Modal -->
+<div id="leaderboardModal" class="pixel-modal-overlay">
+    <div class="modal-content-box wide" style="max-height: 90vh; overflow-y: auto; display: flex; flex-direction: row; gap: 32px; padding: 0;">
+        <!-- Left: List -->
+        <div style="flex: 1; padding: 40px; border-right: 1px solid #f1f3f4; min-width: 350px;">
+            <h2 style="font-size:24px; margin-bottom:24px; font-weight:700;">Top 100 Candidates</h2>
+            <div style="display:flex; flex-direction:column;">
+                {% for candidate in leaderboard_all %}
+                <div class="lb-modal-item" onclick="loadCandidateDetails({{ candidate.id }})">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div class="lb-rank {% if forloop.counter <= 3 %}gold{% endif %}" style="width:36px; height:36px;">{{ forloop.counter }}</div>
+                        <div>
+                            <div style="font-weight:600; font-size:15px;">{{ candidate.username }}</div>
+                            <div style="font-size:12px; color:var(--pm-text-secondary);">Ranked #{{ forloop.counter }}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; color:var(--pm-primary); font-size:18px;">{{ candidate.avg_score|floatformat:1 }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="text-align:center; color:var(--pm-text-disabled);">No leaderboard data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Right: Details (AJAX Filled) -->
+        <div id="candidateDetailsPanel" style="flex: 1.2; padding: 40px; background: #fafafa; display: flex; flex-direction: column;">
+            <button onclick="document.getElementById('leaderboardModal').classList.remove('show')" style="position:absolute; top:20px; right:20px; color:#c5221f; background:#fce8e6; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;"><span class="material-symbols-rounded">close</span></button>
             
-            <form id="dashboardScheduleForm">
-                <input type="text" id="schedTitle" class="pixel-input" placeholder="Title (e.g., Technical Round)" value="Technical Round 2" required>
-                <input type="date" id="schedDate" class="pixel-input" required>
-                <input type="time" id="schedTime" class="pixel-input" required>
-                <button type="submit" class="pixel-btn" id="schedBtn">Add to calendar</button>
-            </form>
-            <div id="schedResult" style="margin-top: 16px;"></div>
+            <div id="detailsLoader" style="display:none; text-align:center; margin-top:100px;">
+                <div style="width:40px; height:40px; border:4px solid #eee; border-top:4px solid var(--pm-primary); border-radius:50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+                <p style="color:var(--pm-text-secondary);">Fetching Portfolio...</p>
+            </div>
+
+            <div id="detailsInital" style="text-align:center; margin-top:100px; color:var(--pm-text-disabled);">
+                <span class="material-symbols-rounded" style="font-size:64px; margin-bottom:16px;">person_search</span>
+                <p>Select a candidate to deep-dive <br> into their performance metrics.</p>
+            </div>
+
+            <div id="detailsContent" style="display:none;">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;">
+                    <div>
+                        <h3 id="det_username" style="font-size:20px; margin-bottom:4px;">Username</h3>
+                        <p id="det_role" style="font-size:13px; color:var(--pm-text-secondary);">Role</p>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <a id="det_resume" href="#" target="_blank" class="pm-btn pm-btn-outline" style="font-size:12px; padding:6px 14px;">
+                            <span class="material-symbols-rounded" style="font-size:18px">download</span> Resume
+                        </a>
+                    </div>
+                </div>
+
+                <div id="det_badges" style="display:flex; gap:8px; margin-bottom:24px;">
+                    <!-- Badges -->
+                </div>
+
+                <!-- Stats Grid -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:24px;">
+                    <div style="background:white; padding:16px; border-radius:16px; border:1px solid #f1f3f4;">
+                        <div style="font-size:11px; color:var(--pm-text-disabled); text-transform:uppercase;">Sessions</div>
+                        <div id="det_count" style="font-size:20px; font-weight:700;">0</div>
+                    </div>
+                    <div style="background:white; padding:16px; border-radius:16px; border:1px solid #f1f3f4;">
+                        <div style="font-size:11px; color:var(--pm-text-disabled); text-transform:uppercase;">Overall Fit</div>
+                        <div id="det_fit" style="font-size:20px; font-weight:700; color:var(--pm-green);">Excellent</div>
+                    </div>
+                </div>
+
+                <!-- Insights -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:24px;">
+                    <div style="background:#e6f4ea; padding:16px; border-radius:16px;">
+                        <div style="font-size:11px; color:#137333; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Top Strength</div>
+                        <div id="det_strength" style="font-size:12px; color:#137333;">Analytical Skills</div>
+                    </div>
+                    <div style="background:#fef7e0; padding:16px; border-radius:16px;">
+                        <div style="font-size:11px; color:#b05a00; font-weight:700; text-transform:uppercase; margin-bottom:4px;">To Improve</div>
+                        <div id="det_improve" style="font-size:12px; color:#b05a00;">System Design</div>
+                    </div>
+                </div>
+
+                <!-- Graph -->
+                <div style="background:white; padding:20px; border-radius:24px; border:1px solid #f1f3f4; margin-bottom:24px;">
+                    <p style="font-size:14px; font-weight:600; margin-bottom:12px;">Full Performance Matrix</p>
+                    <canvas id="performanceChart" height="180"></canvas>
+                </div>
+
+                <!-- Role History -->
+                <p style="font-size:14px; font-weight:600; margin-bottom:12px;">Domain Expertise</p>
+                <div id="det_history" style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <style>
-    .pixel-modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        z-index: 9999; display: flex; align-items: center; justify-content: center;
-        opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-    }
-    .pixel-modal-overlay.show { opacity: 1; pointer-events: auto; }
-    .pixel-schedule-modal {
-        background: white; border-radius: 28px; padding: 32px; width: 90%; max-width: 420px;
-        box-shadow: 0 24px 48px rgba(0,0,0,0.2); position: relative;
-        transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .pixel-modal-overlay.show .pixel-schedule-modal { transform: translateY(0); }
-    
-    .pixel-close-btn {
-        position: absolute; top: 20px; right: 20px;
-        background: #fce8e6; color: #c5221f; border: none;
-        width: 36px; height: 36px; border-radius: 50%;
-        font-size: 20px; cursor: pointer; display: flex;
-        align-items: center; justify-content: center; transition: 0.2s;
-        text-decoration: none;
-    }
-    .pixel-close-btn:hover { background: #fad2cf; }
-    
-    .pixel-input {
-        width: 100%; border: 2px solid #f1f3f4; border-radius: 12px;
-        padding: 14px 16px; margin-bottom: 16px; font-size: 16px;
-        background: #f8f9fa; transition: 0.2s; font-family: inherit;
-        box-sizing: border-box;
-    }
-    .pixel-input:focus { border-color: #1a73e8; outline: none; background: white; }
-    
-    .pixel-btn {
-        width: 100%; padding: 14px; border-radius: 100px;
-        background: #d3e3fd; color: #0b57d0; border: none; font-weight: 600;
-        font-size: 16px; cursor: pointer; transition: 0.2s; font-family: inherit;
-    }
-    .pixel-btn:hover { background: #b8d0fa; }
-    </style>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const schedSessionId = urlParams.get('schedule_session_id');
-        const modal = document.getElementById('scheduleModalOverlay');
-        const closeBtn = document.getElementById('closeScheduleModal');
-        const schedForm = document.getElementById('dashboardScheduleForm');
-        
-        if (schedSessionId) {
-            modal.classList.add('show');
-            // Remove from URL so a refresh doesn't trigger it again
-            window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Default date/time logic (Tomorrow 10:00 AM)
-            const now = new Date();
-            now.setDate(now.getDate() + 1);
-            document.getElementById('schedDate').value = now.toISOString().split('T')[0];
-            document.getElementById('schedTime').value = '10:00';
-        }
-        
-        const closeModal = () => {
-            modal.classList.remove('show');
-        };
-        
-        closeBtn.addEventListener('click', closeModal);
-        
-        schedForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('schedBtn');
-            btn.textContent = 'Scheduling...';
-            btn.disabled = true;
-            
-            fetch('/interviews/api/schedule-interview/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    session_id: schedSessionId || '1',
-                    date: document.getElementById('schedDate').value,
-                    time: document.getElementById('schedTime').value,
-                    notes: document.getElementById('schedTitle').value
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    btn.textContent = 'Scheduled!';
-                    btn.style.background = '#c4eed0';
-                    btn.style.color = '#0d652d';
-                    setTimeout(closeModal, 1500); // Close after 1.5s
-                } else {
-                    document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Failed: ${data.error || 'Unknown'}</span>`;
-                    btn.textContent = 'Add to calendar';
-                    btn.disabled = false;
-                }
-            })
-            .catch(err => {
-                document.getElementById('schedResult').innerHTML = `<span style="color:#c5221f; font-size:14px;">Error scheduling.</span>`;
-                btn.textContent = 'Add to calendar';
-                btn.disabled = false;
-            });
-        });
-    });
-    </script>
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
 
-{% endblock %}
-
-{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('gProfileToggle');
-    const dropdown = document.getElementById('profileDropdown');
-    const wrap = document.getElementById('profWrap');
+let scoreChart = null;
 
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('active');
+async function loadCandidateDetails(userId) {
+    const loader = document.getElementById('detailsLoader');
+    const intro = document.getElementById('detailsInital');
+    const content = document.getElementById('detailsContent');
+    
+    intro.style.display = 'none';
+    content.style.display = 'none';
+    loader.style.display = 'block';
+
+    try {
+        const response = await fetch(`/interviews/api/candidate/${userId}/`);
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('det_username').textContent = data.username;
+            document.getElementById('det_role').textContent = data.role + " | " + data.level;
+            document.getElementById('det_count').textContent = data.total_interviews;
+            
+            // Resume
+            const resBtn = document.getElementById('det_resume');
+            if (data.resume_url) {
+                resBtn.href = data.resume_url;
+                resBtn.style.display = 'inline-flex';
+            } else {
+                resBtn.style.display = 'none';
+            }
+
+            // Badges
+            const badgeWrap = document.getElementById('det_badges');
+            badgeWrap.innerHTML = '';
+            data.badges.forEach(badge => {
+                const b = document.createElement('div');
+                b.className = 'pm-chip';
+                b.style.background = '#e8f0fe';
+                b.style.color = '#1a73e8';
+                b.textContent = badge;
+                badgeWrap.appendChild(b);
+            });
+
+            // Feedback
+            document.getElementById('det_strength').textContent = data.feedback.strengths;
+            document.getElementById('det_improve').textContent = data.feedback.improvements;
+            
+            // Overall Fit
+            const fit = document.getElementById('det_fit');
+            const avg = data.history.reduce((a, b) => a + b.tech, 0) / (data.history.length || 1);
+            if(avg > 85) { fit.textContent = 'Excellent'; fit.style.color = '#137333'; }
+            else if(avg > 70) { fit.textContent = 'Strong'; fit.style.color = '#1a73e8'; }
+            else { fit.textContent = 'Developing'; fit.style.color = '#b05a00'; }
+
+            // Roles History
+            const histWrap = document.getElementById('det_history');
+            histWrap.innerHTML = '';
+            const uniqueRoles = [...new Set(data.history.map(h => h.role))];
+            uniqueRoles.forEach(role => {
+                const badge = document.createElement('div');
+                badge.className = 'pm-chip';
+                badge.style.background = '#f1f3f4';
+                badge.style.color = '#5f6368';
+                badge.textContent = role;
+                histWrap.appendChild(badge);
+            });
+
+            // Refresh Chart
+            renderPerformanceChart(data.history);
+
+            loader.style.display = 'none';
+            content.style.display = 'block';
+        }
+    } catch (err) {
+        console.error(err);
+        loader.style.display = 'none';
+        intro.style.display = 'block';
+        intro.innerHTML = '<p style="color:var(--pm-red)">Connection error</p>';
+    }
+}
+
+function renderPerformanceChart(history) {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    if (scoreChart) scoreChart.destroy();
+    
+    const labels = history.map(h => h.date);
+    const techScores = history.map(h => h.tech);
+    const commScores = history.map(h => h.comm);
+    const confScores = history.map(h => h.conf);
+
+    scoreChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Tech',
+                data: techScores,
+                borderColor: '#1a73e8',
+                backgroundColor: 'rgba(26, 115, 232, 0.05)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Comm',
+                data: commScores,
+                borderColor: '#34a853',
+                backgroundColor: 'rgba(52, 168, 83, 0.05)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Conf',
+                data: confScores,
+                borderColor: '#fbbc04',
+                backgroundColor: 'transparent',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } } },
+            scales: {
+                y: { min: 0, max: 100, ticks: { font: { size: 9 } } },
+                x: { ticks: { font: { size: 9 } } }
+            }
+        }
     });
-    document.addEventListener('click', (e) => {
-        if (!wrap.contains(e.target)) dropdown.classList.remove('active');
-    });
-});
+}
 </script>
+
+<!-- Scheduling Modal -->
+<div id="scheduleModal" class="pixel-modal-overlay {% if trigger_schedule %}show{% endif %}">
+    <div class="modal-content-box">
+        <a href="{% url 'core:dashboard' %}" style="position:absolute; top:20px; right:20px; color:#c5221f; background:#fce8e6; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;"><span class="material-symbols-rounded">close</span></a>
+        <div style="text-align:center; margin-bottom:24px;">
+            <h2 style="font-size:22px; margin-bottom:8px;">Schedule Next Prep</h2>
+            <p style="font-size:14px; color:var(--pm-text-secondary);">Pick a date to stay consistent.</p>
+        </div>
+        <form action="{% url 'interviews:api_schedule_interview' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="session_id" value="{{ schedule_session_id }}">
+            <input type="date" name="scheduled_date" style="width:100%; padding:14px; border-radius:12px; border:2px solid #f1f3f4; margin-bottom:16px;" required min="{{ date_min }}" max="{{ date_max }}">
+            <button type="submit" style="width:100%; padding:14px; border-radius:100px; background:#d3e3fd; color:#0b57d0; border:none; font-weight:600; cursor:pointer;">Confirm Schedule</button>
+        </form>
+        <div style="margin-top:24px; text-align:center; border-top:1px solid #f1f3f4; padding-top:20px;">
+             <p style="font-size:12px; color:var(--pm-text-secondary); margin-bottom:12px;">Link Google to auto-sync calendar.</p>
+             <a href="{% url 'accounts:logout' %}" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#f8f9fa; border-radius:100px; border:1px solid #dadce0; color:var(--pm-text); text-decoration:none; font-size:12px;">Logout & Switch to Google</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

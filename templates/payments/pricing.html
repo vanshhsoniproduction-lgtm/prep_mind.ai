@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Pricing | PrepMind AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pricing-header {
+        text-align: center;
+        padding: 80px 24px 40px;
+        background: radial-gradient(circle at top, var(--pm-primary-light) 0%, transparent 70%);
+    }
+    .pricing-card {
+        padding: 40px;
+        background: white;
+        border-radius: 24px;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid var(--pm-border-light);
+    }
+    .pricing-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 24px 48px rgba(0,0,0,0.1);
+        border-color: var(--pm-primary-surface);
+    }
+    .price-tag {
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--pm-text);
+        margin: 24px 0;
+    }
+    .price-tag span {
+        font-size: 18px;
+        color: var(--pm-text-secondary);
+        font-weight: 400;
+    }
+    .feature-list {
+        list-style: none;
+        margin: 32px 0;
+        padding: 0;
+    }
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        color: var(--pm-text-secondary);
+    }
+    .feature-item i {
+        color: var(--pm-green);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="pricing-header animate-fadeIn">
+    <div class="pm-container">
+        <h1 style="font-size: 42px; margin-bottom: 16px;">Supercharge Your Career</h1>
+        <p style="color: var(--pm-text-secondary); font-size: 18px; max-width: 600px; margin: 0 auto;">
+            Get high-fidelity mock interviews tailored to your target job. 
+            Real-time feedback, code evaluation, and career insights.
+        </p>
+    </div>
+</section>
+
+<div class="pm-container animate-slideUp" style="display: flex; justify-content: center; gap: 32px; align-items: stretch; flex-wrap: wrap; margin-bottom: 80px;">
+    <!-- Single Credit -->
+    <div class="pm-card pricing-card" style="flex: 1; max-width: 400px; display: flex; flex-direction: column;">
+        <div style="font-size: 14px; font-weight: 600; color: var(--pm-text-secondary); text-transform: uppercase; margin-bottom: 8px;">Individual</div>
+        <h3 style="font-size: 24px; margin-bottom: 12px; font-weight: 600;">Pay as you go</h3>
+        
+        <div class="price-tag">
+            ₹{{ interview_price }}<span> / session</span>
+        </div>
+        
+        <ul class="feature-list" style="flex: 1;">
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Full Interview Experience</span></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Detailed Feedback Report</span></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Coding Round Included</span></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Gemini Pro Powered AI</span></li>
+        </ul>
+        
+        <button onclick="purchase('single')" class="pm-btn pm-btn-outline" style="width: 100%; margin-top: 24px; height: 54px; font-weight: 600;">
+            Buy 1 Credit
+        </button>
+    </div>
+
+    <!-- 10 Credits Bundle -->
+    <div class="pm-card pricing-card" style="flex: 1; max-width: 400px; display: flex; flex-direction: column; border: 2px solid var(--pm-primary); position: relative; box-shadow: 0 32px 64px rgba(26, 115, 232, 0.12);">
+        <div class="pm-chip" style="background: var(--pm-primary); color: white; position: absolute; top: -14px; right: 24px; font-weight: 600; padding: 6px 14px;">BEST VALUE</div>
+        
+        <div style="font-size: 14px; font-weight: 600; color: var(--pm-primary); text-transform: uppercase; margin-bottom: 8px;">Mastery Pack</div>
+        <h3 style="font-size: 24px; margin-bottom: 12px; font-weight: 600;">The Pro Bundle</h3>
+        
+        <div class="price-tag" style="color: var(--pm-primary); font-weight: 800;">
+            ₹259<span> / 10 sessions</span>
+        </div>
+        
+        <ul class="feature-list" style="flex: 1;">
+            <li class="feature-item"><i class="fas fa-bolt" style="color: var(--pm-primary)"></i> <strong>10 Sessions (~₹25 each)</strong></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Lifetime Validity</span></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Priority Feedback Processing</span></li>
+            <li class="feature-item"><i class="fas fa-check-circle"></i> <span>Full Access to Analytics</span></li>
+        </ul>
+        
+        <button onclick="purchase('bundle')" class="pm-btn pm-btn-primary" style="width: 100%; margin-top: 24px; height: 56px; font-weight: 700; font-size: 17px; box-shadow: 0 8px 24px rgba(26, 115, 232, 0.4);">
+            Unlock All Sessions
+        </button>
+    </div>
+</div>
+
+<p style="text-align: center; margin-top: -40px; margin-bottom: 60px; font-size: 14px; color: var(--pm-text-disabled);">
+    <i class="fas fa-shield-alt" style="margin-right: 6px;"></i> Secure checkout via Razorpay
+</p>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+function purchase(pack) {
+    fetch('{% url "payments:create_order" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ pack: pack })
+    })
+    .then(response => response.json())
+    .then(data => {
+        var options = {
+            "key": "{{ razorpay_key_id }}",
+            "amount": data.amount,
+            "currency": "INR",
+            "name": "PrepMind AI",
+            "description": "Purchase Credits",
+            "order_id": data.id,
+            "handler": function (response){
+                verifyPayment(response);
+            },
+            "theme": { "color": "#1a73e8" }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+    });
+}
+
+function verifyPayment(response) {
+    const formData = new FormData();
+    formData.append('razorpay_order_id', response.razorpay_order_id);
+    formData.append('razorpay_payment_id', response.razorpay_payment_id);
+    formData.append('razorpay_signature', response.razorpay_signature);
+
+    fetch('{% url "payments:verify_payment" %}', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            window.location.href = '{% url "core:dashboard" %}';
+        }
+    });
+}
+</script>
+{% endblock %}

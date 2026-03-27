@@ -9,7 +9,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-render-key")
 
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'voice',
     'ai_engine',
     'resumes',
+    'payments',
 
     # Third-party
     'rest_framework',
@@ -197,3 +198,10 @@ SOCIALACCOUNT_STORE_TOKENS = True
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ======================
+# Razorpay Configuration
+# ======================
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_SAPD7GzCqPFZg9')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'S3m3dj0XbJrEcx7wFi55VYiH')
+INTERVIEW_PRICE_INR = 30

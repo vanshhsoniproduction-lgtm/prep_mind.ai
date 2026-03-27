@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
+<style>
 .profile-page { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px 80px; }
 .profile-card {
     max-width: 520px; width: 100%; background: var(--pm-surface);
@@ -51,19 +52,10 @@
     box-shadow: var(--pm-shadow-sm); margin-top: 8px;
 }
 .profile-submit:hover { background: var(--pm-primary-hover); box-shadow: var(--pm-shadow-md); }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Navbar -->
-<nav class="pm-nav">
-    <div class="pm-nav-inner">
-        <a href="/" class="pm-logo">
-            <div class="pm-logo-icon">P</div>
-            <div class="pm-logo-text">Prep<span>Mind</span></div>
-        </a>
-    </div>
-</nav>
-
 <div class="profile-page">
     <div class="profile-card animate-fadeIn">
         <div class="profile-header">

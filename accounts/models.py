@@ -6,6 +6,7 @@ class CustomUser(AbstractUser):
     resume = models.FileField(upload_to='resumes/', null=True, blank=True)
     target_role = models.CharField(max_length=100, null=True, blank=True)
     experience_level = models.CharField(max_length=50, null=True, blank=True)
+    interview_credits = models.IntegerField(default=3)
     
     def __str__(self):
         return self.email or self.username

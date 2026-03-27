@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block content %}
+{% block extra_css %}
 <style>
     body {
         background-color: #f8f9fa !important;
@@ -96,7 +96,9 @@
         align-items: center;
     }
 </style>
+{% endblock %}
 
+{% block content %}
 <div class="pixel-card">
     <h2 style="font-size: 24px; margin-bottom: 8px;">Schedule Next Interview</h2>
     <p style="color: #5f6368; font-size: 14px; margin-bottom: 32px;">Pick a date for your next PrepMind AI mock assessment.</p>
@@ -117,7 +119,9 @@
         <div id="buttonContainer"></div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     document.getElementById('schedBtn').addEventListener('click', async () => {
         const title = document.getElementById('schedTitle').value;
@@ -188,7 +192,7 @@
                                 <a href="${d.doc_link}" target="_blank" class="pixel-chip-btn btn-doc-tonal">
                                     <span class="material-symbols-rounded" style="font-size:20px">description</span> 
                                     View AI Report
-                                </a>
+                                Rose
                             `;
                         }
                     });

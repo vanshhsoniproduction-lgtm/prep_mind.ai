@@ -135,11 +135,148 @@
         .animate-fadeIn { animation: fadeIn .4s ease-out; }
         .animate-slideUp { animation: slideUp .5s ease-out; }
 
-        {% block extra_css %}{% endblock %}
+        /* Global Profile Styles */
+        .profile-toggle {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent;
+            background: var(--pm-primary); color: #fff; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; font-weight: 600; font-size: 16px;
+            transition: all var(--pm-transition); overflow: hidden; padding: 0;
+        }
+        .profile-toggle:hover { border-color: var(--pm-primary-surface); }
+        .profile-toggle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0; width: 280px;
+            background: var(--pm-surface); border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light);
+            box-shadow: var(--pm-shadow-lg); opacity: 0; visibility: hidden;
+            transform: translateY(10px); transition: all var(--pm-transition); z-index: 101;
+        }
+        .profile-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
+        .profile-dropdown-header { padding: 20px; border-bottom: 1px solid var(--pm-border-light); }
+        .profile-dropdown-header h4 { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+        .profile-dropdown-header p { font-size: 13px; color: var(--pm-text-secondary); word-break: break-all; }
+        .profile-dropdown-links a {
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+            color: var(--pm-text); font-size: 14px; transition: background 0.2s;
+            text-decoration: none;
+        }
+        .profile-dropdown-links a:hover { background: var(--pm-bg); text-decoration: none; }
+        .profile-dropdown-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--pm-primary-light); color: var(--pm-primary); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; margin-bottom: 12px; overflow: hidden; }
+        .profile-dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <header class="pm-nav">
+        <div class="pm-nav-inner">
+            <a href="/" class="pm-logo">
+                <div class="pm-logo-icon">P</div>
+                <div class="pm-logo-text">Prep<span>Mind</span> AI</div>
+            </a>
+            
+            <nav style="display: flex; align-items: center; gap: 24px;">
+                {% if user.is_authenticated %}
+                    <div style="position: relative;" id="profWrap">
+                        <button class="profile-toggle" id="gProfileToggle">
+                            {% if user.socialaccount_set.all.0.get_avatar_url %}
+                                <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Profile">
+                            {% else %}
+                                {{ user.username|first|upper }}
+                            {% endif %}
+                        </button>
+                        
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-dropdown-avatar">
+                                    {% if user.socialaccount_set.all.0.get_avatar_url %}
+                                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="Avatar">
+                                    {% else %}
+                                        {{ user.username|first|upper }}
+                                    {% endif %}
+                                </div>
+                                <h4>{{ user.get_full_name|default:user.username }}</h4>
+                                <p>{{ user.email }}</p>
+                            </div>
+                            <div class="profile-dropdown-links">
+                                <a href="{% url 'core:dashboard' %}">
+                                    <span class="material-symbols-rounded" style="font-size:18px">dashboard</span>
+                                    Dashboard
+                                </a>
+                                <a href="{% url 'accounts:setup_profile' %}">
+                                    <span class="material-symbols-rounded" style="font-size:18px">person</span>
+                                    Profile Settings
+                                </a>
+                                <a href="{% url 'payments:pricing' %}">
+                                    <span class="material-symbols-rounded" style="font-size:18px">receipt_long</span>
+                                    Billing & Credits
+                                </a>
+                                <div style="border-top: 1px solid var(--pm-border-light); margin: 4px 0;"></div>
+                                <a href="{% url 'accounts:logout' %}" style="display:flex; align-items:center; gap:12px; padding:12px 20px; color:var(--pm-red); font-size:14px; text-decoration:none;">
+                                    <span class="material-symbols-rounded" style="font-size:18px">logout</span>
+                                    Sign Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'account_login' %}" style="font-weight: 500; font-size: 14px; color: var(--pm-text);">Login</a>
+                    <a href="{% url 'account_signup' %}" class="pm-btn pm-btn-primary">Get Started</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main style="flex: 1;">
+        {% if messages %}
+            <div class="pm-container" style="margin-top: 20px;">
+                {% for message in messages %}
+                    <div class="pm-card animate-fadeIn" style="padding: 12px 20px; border-left: 4px solid {% if message.tags == 'success' %}#34a853{% elif message.tags == 'warning' %}#fbbc04{% else %}#ea4335{% endif %}; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 14px; font-weight: 500;">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if not user.is_authenticated %}
+    <footer style="background: var(--pm-surface); border-top: 1px solid var(--pm-border-light); padding: 64px 0 32px;">
+        <div class="pm-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 64px;">
+                <div>
+                    <a href="/" class="pm-logo" style="margin-bottom: 24px;">
+                        <div class="pm-logo-icon">P</div>
+                        <div class="pm-logo-text">Prep<span>Mind</span> AI</div>
+                    </a>
+                    <p style="color: var(--pm-text-secondary); font-size: 14px;">Next-generation AI technical interviewer. Master your skills with personalized sessions.</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 24px;">Product</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                        <li><a href="{% url 'core:about' %}" style="color: var(--pm-text-secondary); font-size: 14px;">About</a></li>
+                        <li><a href="{% url 'payments:pricing' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Pricing</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div style="border-top: 1px solid var(--pm-border-light); padding-top: 32px; text-align: center;">
+                <p style="color: var(--pm-text-disabled); font-size: 13px;">© 2026 PrepMind AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('gProfileToggle');
+        const dropdown = document.getElementById('profileDropdown');
+        const wrap = document.getElementById('profWrap');
+        if (btn && dropdown) {
+            btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('active'); };
+            window.onclick = () => dropdown.classList.remove('active');
+        }
+    });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
