@@ -137,6 +137,69 @@
                 </div>
             </div>
 
+            <!-- HR Interview Requests -->
+            {% if hr_requests %}
+            <div class="pm-card" style="padding:0;overflow:hidden; border-left: 4px solid var(--pm-primary);">
+                <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light); display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size:16px;font-weight:500; display: flex; align-items: center; gap: 10px;">
+                        <span class="material-symbols-rounded" style="color: var(--pm-primary);">business_center</span>
+                        HR Interview Requests
+                        {% if unread_hr_count > 0 %}
+                        <span style="background: var(--pm-red); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">{{ unread_hr_count }} new</span>
+                        {% endif %}
+                    </h3>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="filterHrReqs('all', this)" class="hr-filter-pill active" style="padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px solid var(--pm-border); cursor: pointer; background: var(--pm-primary); color: white;">All</button>
+                        <button onclick="filterHrReqs('unread', this)" class="hr-filter-pill" style="padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px solid var(--pm-border); cursor: pointer; background: white; color: var(--pm-text-secondary);">Unread</button>
+                        <button onclick="filterHrReqs('read', this)" class="hr-filter-pill" style="padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px solid var(--pm-border); cursor: pointer; background: white; color: var(--pm-text-secondary);">Read</button>
+                    </div>
+                </div>
+                <div id="hrReqsContainer" style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
+                    {% for req in hr_requests %}
+                    <div class="interview-item hr-req-item {% if not req.is_read_by_candidate %}upcoming{% endif %}" 
+                         data-read="{{ req.is_read_by_candidate|yesno:'true,false' }}"
+                         onclick="toggleHrReqDetail(this)"
+                         style="flex-direction: column; align-items: stretch; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div class="interview-left">
+                                <div class="interview-icon" style="{% if not req.is_read_by_candidate %}background: var(--pm-primary); color: white;{% endif %}">
+                                    <span class="material-symbols-rounded">business_center</span>
+                                </div>
+                                <div class="interview-meta">
+                                    <h4>{{ req.hr_user.company_name|default:"Company" }} — {{ req.hr_user.get_full_name|default:req.hr_user.username }}</h4>
+                                    <p>{{ req.scheduled_date|date:"M d, Y" }} at {{ req.scheduled_time|time:"h:i A" }}</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                {% if not req.is_read_by_candidate %}
+                                <button onclick="event.stopPropagation(); markHrReqRead({{ req.id }}, this)" class="pm-btn pm-btn-secondary" style="padding: 4px 12px; font-size: 11px;">Mark Read</button>
+                                {% else %}
+                                <span style="font-size: 11px; color: var(--pm-green); font-weight: 600;">✓ Read</span>
+                                {% endif %}
+                                <span class="material-symbols-rounded" style="font-size:18px; color: var(--pm-text-disabled); transition: 0.2s;">expand_more</span>
+                            </div>
+                        </div>
+                        <!-- Expandable detail -->
+                        <div class="hr-req-detail" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--pm-border-light);">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                <div style="font-size: 13px;"><strong>Email:</strong> {{ req.hr_user.email|default:"N/A" }}</div>
+                                <div style="font-size: 13px;"><strong>Phone:</strong> {{ req.hr_user.phone_number|default:"N/A" }}</div>
+                                <div style="font-size: 13px;"><strong>Company:</strong> {{ req.hr_user.company_name|default:"N/A" }}</div>
+                                <div style="font-size: 13px;"><strong>Status:</strong> {{ req.status }}</div>
+                            </div>
+                            {% if req.note %}
+                            <div style="background: var(--pm-bg); padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.6;">
+                                <strong style="font-size: 11px; text-transform: uppercase; color: var(--pm-text-disabled); display: block; margin-bottom: 4px;">Note from HR</strong>
+                                {{ req.note }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Recent Activity -->
             <div class="pm-card" style="padding:0;overflow:hidden;">
                 <div style="padding:20px 24px;border-bottom:1px solid var(--pm-border-light);">
@@ -504,6 +567,59 @@ function renderPerformanceChart(history) {
             }
         }
     });
+}
+
+// ==================== HR REQUEST FUNCTIONS ====================
+function toggleHrReqDetail(el) {
+    const detail = el.querySelector('.hr-req-detail');
+    const arrow = el.querySelector('.material-symbols-rounded:last-child');
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        if (arrow) arrow.textContent = 'expand_less';
+    } else {
+        detail.style.display = 'none';
+        if (arrow) arrow.textContent = 'expand_more';
+    }
+}
+
+function filterHrReqs(filter, btnEl) {
+    document.querySelectorAll('.hr-filter-pill').forEach(b => {
+        b.style.background = 'white';
+        b.style.color = 'var(--pm-text-secondary)';
+    });
+    btnEl.style.background = 'var(--pm-primary)';
+    btnEl.style.color = 'white';
+    
+    document.querySelectorAll('.hr-req-item').forEach(item => {
+        const isRead = item.dataset.read === 'true';
+        if (filter === 'all') {
+            item.style.display = '';
+        } else if (filter === 'read') {
+            item.style.display = isRead ? '' : 'none';
+        } else {
+            item.style.display = !isRead ? '' : 'none';
+        }
+    });
+}
+
+async function markHrReqRead(reqId, btnEl) {
+    try {
+        const res = await fetch(`/user/api/hr-requests/${reqId}/read/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const item = btnEl.closest('.hr-req-item');
+            item.classList.remove('upcoming');
+            item.dataset.read = 'true';
+            const icon = item.querySelector('.interview-icon');
+            if (icon) { icon.style.background = ''; icon.style.color = ''; }
+            btnEl.outerHTML = '<span style="font-size: 11px; color: var(--pm-green); font-weight: 600;">✓ Read</span>';
+        }
+    } catch (e) {
+        console.error(e);
+    }
 }
 </script>
 

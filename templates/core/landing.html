@@ -170,6 +170,34 @@
 .guest-input-group label { display: block; font-size: 12px; font-weight: 700; color: var(--pm-text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
 .guest-input-group input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid var(--pm-border-light); font-size: 16px; outline: none; background: #f8f9fa; transition: all 0.2s; }
 .guest-input-group input:focus { border-color: var(--pm-primary); background: #fff; box-shadow: 0 0 0 4px var(--pm-primary-light); }
+/* HR Modal Logic - Light Theme */
+.hr-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(16px);
+    z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
+}
+.hr-modal-overlay.show { display: flex; opacity: 1; }
+.hr-modal {
+    background: #fff; border-radius: 24px; padding: 48px; width: 100%; max-width: 500px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.05);
+    transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    color: var(--pm-text);
+}
+.hr-modal-overlay.show .hr-modal { transform: translateY(0) scale(1); }
+.hr-modal h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: var(--pm-text); }
+.hr-input-group label { display: block; font-size: 12px; font-weight: 700; color: var(--pm-text-secondary); margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+.hr-input-group input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid var(--pm-border-light); font-size: 16px; outline: none; background: #f8f9fa; color: var(--pm-text); transition: all 0.2s; }
+.hr-input-group input:focus { border-color: var(--pm-primary); background: #fff; box-shadow: 0 0 0 4px var(--pm-primary-light); }
+.hr-tabs { display: flex; border-bottom: 1px solid var(--pm-border-light); margin-bottom: 28px; }
+.hr-tab { padding: 12px 24px; cursor: pointer; color: var(--pm-text-disabled); border-bottom: 3px solid transparent; font-weight: 600; font-size: 15px; transition: all 0.2s; }
+.hr-tab.active { color: var(--pm-primary); border-color: var(--pm-primary); }
+
+.hr-cta {
+    width: 100%; padding: 16px; border-radius: 100px;
+    background: var(--pm-primary); color: white; border: none; font-size: 16px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(26, 115, 232, 0.3); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+}
+.hr-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(26, 115, 232, 0.4); }
 </style>
 {% endblock %}
 
@@ -191,12 +219,19 @@
             Experience hyper-realistic voice and coding mock interviews. Get actionable feedback on your technical accuracy, communication style, and confidence.
         </p>
     
-    <div class="landing-cta">
+    <div class="landing-cta hover-scale">
         {% if user.is_authenticated %}
+            {% if user.is_hr %}
+            <a href="{% url 'core:hr_dashboard' %}" class="cta-primary">
+                <span class="material-symbols-rounded">groups</span>
+                Go to HR Dashboard
+            </a>
+            {% else %}
             <a href="{% url 'core:dashboard' %}" class="cta-primary">
                 <span class="material-symbols-rounded">dashboard</span>
                 Go to Dashboard
             </a>
+            {% endif %}
         {% else %}
             <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
                 {% csrf_token %}
@@ -208,6 +243,10 @@
             <button type="button" id="guestBtn" class="cta-secondary">
                 <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 0;">person</span>
                 Try Demo Environment
+            </button>
+            <button type="button" id="hrBtn" class="cta-secondary">
+                <span class="material-symbols-rounded">business_center</span>
+                Are you HR? Hire Talent
             </button>
         {% endif %}
     </div>
@@ -381,6 +420,73 @@
     </div>
 </div>
 
+<!-- HR Portal Modal -->
+<div id="hrModalOverlay" class="hr-modal-overlay">
+    <div class="hr-modal">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="pm-logo-icon" style="width: 40px; height: 40px; border-radius: 12px; font-size: 20px; background: var(--pm-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: box;">P</div>
+                <h2 style="margin: 0; font-size: 24px;">HR <span style="color: var(--pm-primary);">Portal</span></h2>
+            </div>
+            <button id="closeHrModal" style="background: none; border: none; cursor: pointer; color: var(--pm-text-disabled); border-radius: 50%; padding: 8px;">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        
+        <p style="color: var(--pm-text-secondary); margin-bottom: 24px; font-size: 15px;">Access the top 100 performing candidates evaluated by PrepMind AI.</p>
+        
+        <div class="hr-tabs">
+            <div class="hr-tab active" id="tabHrLogin">Sign In</div>
+            <div class="hr-tab" id="tabHrRegister">Request Access</div>
+        </div>
+
+        <!-- HR Login Form -->
+        <form id="hrLoginForm" method="POST" action="{% url 'accounts:hr_login' %}">
+            {% csrf_token %}
+            <div class="guest-input-group" style="margin-bottom: 16px;">
+                <label>Username, Email, or Phone</label>
+                <input type="text" name="login_cred" placeholder="e.g., hr@company.com" required>
+            </div>
+            <div class="guest-input-group" style="margin-bottom: 32px;">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="cta-primary" style="width: 100%; justify-content: center;">Authenticate</button>
+        </form>
+
+        <!-- HR Register Form -->
+        <form id="hrRegisterForm" method="POST" action="{% url 'accounts:hr_register' %}" style="display: none;">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="guest-input-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="Unique handle" required>
+                </div>
+                <div class="guest-input-group">
+                    <label>Work Email</label>
+                    <input type="email" name="email" placeholder="hr@company.com" required>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="guest-input-group">
+                    <label>Company</label>
+                    <input type="text" name="company_name" placeholder="e.g. Google" required>
+                </div>
+                <div class="guest-input-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone_number" placeholder="Optional">
+                </div>
+            </div>
+            <div class="guest-input-group" style="margin-bottom: 32px;">
+                <label>Create Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="cta-primary" style="width: 100%; justify-content: center;">Submit Application</button>
+        </form>
+    </div>
+</div>
+
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // ScrollReveal Logic
@@ -405,17 +511,56 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (btn && modal) {
         btn.onclick = () => {
+            document.body.style.overflow = 'hidden';
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('show'), 10);
         };
         
         const closeModal = () => {
+            document.body.style.overflow = '';
             modal.classList.remove('show');
             setTimeout(() => modal.style.display = 'none', 300);
         };
         
         close.onclick = closeModal;
         modal.onclick = (e) => { if(e.target === modal) closeModal(); };
+    }
+
+    // HR Modal Logic
+    const hrBtn = document.getElementById('hrBtn');
+    const hrModal = document.getElementById('hrModalOverlay');
+    const closeHr = document.getElementById('closeHrModal');
+    
+    if (hrBtn && hrModal) {
+        hrBtn.onclick = () => {
+            document.body.style.overflow = 'hidden';
+            hrModal.style.display = 'flex';
+            setTimeout(() => hrModal.classList.add('show'), 10);
+        };
+        const closeHrModal = () => {
+            document.body.style.overflow = '';
+            hrModal.classList.remove('show');
+            setTimeout(() => hrModal.style.display = 'none', 300);
+        };
+        closeHr.onclick = closeHrModal;
+        hrModal.onclick = (e) => { if(e.target === hrModal) closeHrModal(); };
+    }
+
+    // HR Tabs Switcher
+    const tabLogin = document.getElementById('tabHrLogin');
+    const tabRegister = document.getElementById('tabHrRegister');
+    const formLogin = document.getElementById('hrLoginForm');
+    const formRegister = document.getElementById('hrRegisterForm');
+
+    if (tabLogin && tabRegister) {
+        tabLogin.onclick = () => {
+            tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+            formLogin.style.display = 'block'; formRegister.style.display = 'none';
+        }
+        tabRegister.onclick = () => {
+            tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+            formRegister.style.display = 'block'; formLogin.style.display = 'none';
+        }
     }
 });
 </script>

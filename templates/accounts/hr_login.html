@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}HR Provider Sign In{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block content %}
+<div class="h-screen bg-black/90 flex flex-col justify-center items-center font-sans tracking-wide">
+    <div class="w-full max-w-md p-8 bg-[#111] rounded-2xl border border-white/10 shadow-[0_0_50px_rgba(0,150,255,0.1)] relative overflow-hidden">
+        <!-- Glowing Background Blob -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 rounded-full blur-[60px]"></div>
+
+        <h2 class="text-3xl font-extrabold text-white text-center mb-2 tracking-tight">HR <span class="bg-gradient-to-r from-blue-400 to-indigo-500 text-transparent bg-clip-text">Portal</span></h2>
+        <p class="text-gray-400 text-sm mb-8 text-center">Gain exclusive access to the Top 100 Talent Pool</p>
+        
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-5 relative z-10 transition-all">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Username, Email, or Phone</label>
+                <input type="text" name="login_cred" required placeholder="Enter login credential" 
+                       class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-300">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Password</label>
+                <input type="password" name="password" required placeholder="••••••••" 
+                       class="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition duration-300">
+            </div>
+            
+            <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_4px_15px_rgba(37,99,235,0.3)] transition-all hover:scale-[1.02] mt-4">
+                Enter Portal
+            </button>
+        </form>
+        <p class="mt-8 text-center text-sm text-gray-500">
+            Don't have an HR account? 
+            <a href="{% url 'accounts:hr_register' %}" class="text-blue-400 hover:text-blue-300 underline underline-offset-4 decoration-white/20 hover:decoration-blue-400 transition-colors">Apply here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

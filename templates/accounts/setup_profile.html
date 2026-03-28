@@ -73,6 +73,7 @@
         <form method="POST" enctype="multipart/form-data" class="profile-form">
             {% csrf_token %}
 
+            {% if not user.is_hr %}
             <div class="form-group">
                 <label>Target Role</label>
                 <input type="text" name="target_role" placeholder="e.g. Backend Developer, Data Scientist" value="{{ user.target_role|default:'' }}" required>
@@ -104,6 +105,16 @@
                     </div>
                 {% endif %}
             </div>
+            {% else %}
+            <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" name="company_name" placeholder="e.g. Google" value="{{ user.company_name|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone_number" placeholder="Optional" value="{{ user.phone_number|default:'' }}">
+            </div>
+            {% endif %}
 
             <button type="submit" class="profile-submit">
                 Save & Continue to Dashboard

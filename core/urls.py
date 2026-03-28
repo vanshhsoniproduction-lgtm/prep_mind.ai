@@ -11,4 +11,5 @@ urlpatterns = [
     path('terms/', views.terms, name='terms'),
     path('refunds/', views.refunds, name='refunds'),
     path('core/dashboard/', views.dashboard_redirect, name='dashboard_redirect'),
+    path('hr-dashboard/', views.hr_dashboard, name='hr_dashboard'),
 ]

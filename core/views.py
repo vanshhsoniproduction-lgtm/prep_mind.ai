@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from interviews.models import InterviewSession
 import datetime
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, F
 from django.contrib.auth import get_user_model
 
 def landing_page(request):
@@ -46,8 +46,9 @@ def dashboard(request):
         total_sessions=Count('interviewsession')
     ).filter(avg_score__isnull=False).order_by('-avg_score')
     
+    # Leaderboard (Top 3 only for normal dashboard)
     leaderboard = lb_queryset[:3]
-    leaderboard_all = lb_queryset[:100]
+    # Removed top 100 for normal users
 
     # Current User Rank
     user_rank = None
@@ -136,11 +137,15 @@ def dashboard(request):
         get_month_calendar(next_month)
     ]
 
+    # HR Interview Requests for this user
+    from accounts.models import HRInterviewRequest
+    hr_requests = HRInterviewRequest.objects.filter(candidate=request.user).order_by('-created_at')[:10]
+    unread_hr_count = HRInterviewRequest.objects.filter(candidate=request.user, is_read_by_candidate=False).count()
+
     context = {
         'recent_interviews': recent_interviews,
         'weekly_count': weekly_interviews,
         'leaderboard': leaderboard,
-        'leaderboard_all': leaderboard_all,
         'user_rank': user_rank,
         'user_avg_score': user_avg_score,
         'trigger_schedule': trigger_schedule,
@@ -148,8 +153,57 @@ def dashboard(request):
         'date_min': date_min,
         'date_max': date_max,
         'calendars': calendars,
+        'hr_requests': hr_requests,
+        'unread_hr_count': unread_hr_count,
     }
     return render(request, 'core/dashboard.html', context)
+
+@login_required
+def hr_dashboard(request):
+    if not getattr(request.user, 'is_hr', False):
+        return redirect('core:dashboard')
+        
+    User = get_user_model()
+    from accounts.models import HRUnlockedCandidate, HRInterviewRequest
+    
+    # Leaderboard Logic Grouped by Target Role (Category)
+    lb_queryset = User.objects.filter(is_hr=False).annotate(
+        avg_score=Avg('interviewsession__technical_score'),
+        total_sessions=Count('interviewsession')
+    ).filter(avg_score__isnull=False).order_by('-avg_score')
+    
+    categories = {}
+    
+    # Efficiently add users to their respective category
+    for u in lb_queryset:
+        role_key = (u.target_role.strip().title() if u.target_role else 'Uncategorized')
+        
+        if role_key not in categories:
+            categories[role_key] = []
+            
+        if len(categories[role_key]) < 100:
+            categories[role_key].append(u)
+
+    # Get unlocked candidate IDs for this HR
+    unlocked_ids = list(HRUnlockedCandidate.objects.filter(
+        hr_user=request.user
+    ).values_list('candidate_id', flat=True))
+    
+    # Sent requests count
+    sent_requests_count = HRInterviewRequest.objects.filter(hr_user=request.user).count()
+    unread_by_candidate = HRInterviewRequest.objects.filter(hr_user=request.user, is_read_by_candidate=False).count()
+
+    from django.conf import settings as django_settings
+    
+    context = {
+        'categories': categories,
+        'hr_credits': request.user.hr_credits,
+        'unlocked_ids': unlocked_ids,
+        'sent_requests_count': sent_requests_count,
+        'unread_by_candidate': unread_by_candidate,
+        'razorpay_key_id': django_settings.RAZORPAY_KEY_ID,
+    }
+    return render(request, 'core/hr_dashboard.html', context)
 
 def about(request):
     return render(request, 'core/about.html')

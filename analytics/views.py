@@ -60,7 +60,11 @@ def overview(request):
 
 @login_required
 def session_detail(request, session_id: int):
-    session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
+    if getattr(request.user, 'is_hr', False):
+        session = get_object_or_404(InterviewSession, id=session_id)
+    else:
+        session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
+    
     questions = session.questions.order_by('order')
     answers = Answer.objects.filter(session=session).select_related('question')
     answer_by_question = {ans.question_id: ans for ans in answers}

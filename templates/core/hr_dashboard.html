@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}HR Dashboard | PrepMind AI{% endblock %}
+
+{% block extra_css %}
+<style>
+.pixel-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    z-index: 9999; display: flex; align-items: center; justify-content: center;
+    opacity: 0; visibility: hidden; transition: 0.3s;
+}
+.pixel-modal-overlay.show { opacity: 1; visibility: visible; }
+.modal-content-box {
+    background: white; border-radius: 32px; padding: 40px; width: 95%; max-width: 500px;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.15); transform: scale(0.9); transition: 0.3s;
+    position: relative;
+}
+.modal-content-box.wide { max-width: 800px; }
+.pixel-modal-overlay.show .modal-content-box { transform: scale(1); }
+
+.hr-table { width: 100%; border-collapse: collapse; text-align: left; }
+.hr-table th { padding: 16px; font-size: 12px; font-weight: 600; color: var(--pm-text-secondary); border-bottom: 2px solid var(--pm-border-light); text-transform: uppercase; letter-spacing: 0.5px; }
+.hr-table td { padding: 16px; border-bottom: 1px solid var(--pm-border-light); font-size: 14px; }
+.hr-table tr:hover { background: var(--pm-bg); }
+
+.cand-name { font-weight: 600; color: var(--pm-text); margin-bottom: 4px; }
+.cand-meta { font-size: 12px; color: var(--pm-text-secondary); }
+
+.score-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+    border-radius: var(--pm-radius-full); font-weight: 600; font-size: 13px;
+    background: var(--pm-primary-light); color: var(--pm-primary); border: 1px solid var(--pm-primary-surface);
+}
+
+/* Tab system */
+.hr-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--pm-border-light); margin-bottom: 32px; }
+.hr-tab {
+    padding: 12px 24px; font-size: 14px; font-weight: 600; color: var(--pm-text-secondary);
+    cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.2s;
+    display: flex; align-items: center; gap: 8px; background: none; border-top: none; border-left: none; border-right: none;
+}
+.hr-tab.active { color: var(--pm-primary); border-bottom-color: var(--pm-primary); }
+.hr-tab:hover { color: var(--pm-text); }
+.hr-tab-panel { display: none; }
+.hr-tab-panel.active { display: block; }
+
+.badge-count {
+    background: var(--pm-red); color: white; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px; min-width: 18px; text-align: center;
+}
+
+/* Credit bar */
+.credit-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+    border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-primary-surface);
+    margin-bottom: 32px;
+}
+
+/* Request card */
+.req-card {
+    padding: 20px; border: 1px solid var(--pm-border-light); border-radius: 16px;
+    background: white; transition: 0.2s; cursor: pointer; margin-bottom: 12px;
+}
+.req-card:hover { box-shadow: var(--pm-shadow-sm); border-color: var(--pm-primary-surface); }
+.req-card.unread { border-left: 4px solid var(--pm-primary); }
+
+/* Filter pills */
+.filter-pills { display: flex; gap: 8px; margin-bottom: 20px; }
+.filter-pill {
+    padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--pm-border); background: white; color: var(--pm-text-secondary);
+    cursor: pointer; transition: 0.2s;
+}
+.filter-pill.active { background: var(--pm-primary); color: white; border-color: var(--pm-primary); }
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="pm-container" style="padding-top:40px;padding-bottom:80px;">
+    <!-- Header -->
+    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <div>
+            <h1 style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">HR Dashboard</h1>
+            <p style="color: var(--pm-text-secondary); font-size: 16px;">Discover, evaluate, and approach top talent.</p>
+        </div>
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="pm-btn pm-btn-outline">Sign Out</button>
+        </form>
+    </div>
+
+    <!-- Credit Bar -->
+    <div class="credit-bar">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; box-shadow: var(--pm-shadow-sm);">
+                <span class="material-symbols-rounded" style="color: var(--pm-primary); font-size: 24px;">toll</span>
+            </div>
+            <div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--pm-primary); text-transform: uppercase; letter-spacing: 0.5px;">HR Credits</div>
+                <div style="font-size: 28px; font-weight: 700; color: var(--pm-text);" id="creditCount">{{ hr_credits }}</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="text-align: right; margin-right: 16px;">
+                <div style="font-size: 12px; color: var(--pm-text-secondary);">₹5 / credit</div>
+                <div style="font-size: 12px; color: var(--pm-green); font-weight: 600;">₹30 / 10 credits</div>
+            </div>
+            <button onclick="openBuyCreditsModal()" class="pm-btn pm-btn-primary">Buy Credits</button>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="hr-tabs">
+        <button class="hr-tab active" onclick="switchTab('leaderboard')">
+            <span class="material-symbols-rounded" style="font-size:18px">leaderboard</span>
+            Talent Pool
+        </button>
+        <button class="hr-tab" onclick="switchTab('requests')" id="requestsTab">
+            <span class="material-symbols-rounded" style="font-size:18px">send</span>
+            Sent Requests
+            {% if unread_by_candidate > 0 %}
+            <span class="badge-count">{{ unread_by_candidate }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- TAB 1: Leaderboard -->
+    <div id="panel-leaderboard" class="hr-tab-panel active">
+        {% for category, users in categories.items %}
+        <div class="pm-card" style="margin-bottom: 40px; overflow: hidden; padding: 0;">
+            <div style="padding: 24px; border-bottom: 1px solid var(--pm-border-light); background: var(--pm-bg);">
+                <h2 style="font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 4px; height: 24px; background: var(--pm-primary); border-radius: 4px;"></div>
+                    {{ category }} 
+                    <span style="font-size: 14px; color: var(--pm-text-disabled); font-weight: 500;">({{ users|length }} Candidates)</span>
+                </h2>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="hr-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Candidate</th>
+                            <th>Average Score</th>
+                            <th>Interviews</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr style="cursor: pointer;" onclick="openCandidateModal('{{ u.id }}')">
+                            <td style="font-weight: 700; color: var(--pm-text-secondary);">#{{ forloop.counter }}</td>
+                            <td>
+                                <div class="cand-name">{{ u.get_full_name|default:u.username }}</div>
+                                <div class="cand-meta">{{ u.experience_level|default:"General Level" }}</div>
+                            </td>
+                            <td>
+                                <div class="score-chip">
+                                    <span class="material-symbols-rounded" style="font-size: 16px;">grade</span>
+                                    {% if u.avg_score != None %}{{ u.avg_score|floatformat:1 }}{% else %}N/A{% endif %}
+                                </div>
+                            </td>
+                            <td style="color: var(--pm-text-secondary);">{{ u.total_sessions }} completed</td>
+                            <td>
+                                <button class="pm-btn pm-btn-secondary" style="padding: 6px 16px; font-size: 12px;" onclick="event.stopPropagation(); openCandidateModal('{{ u.id }}')">View Profile</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--pm-text-disabled);">
+                                No candidates evaluated for this category yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% empty %}
+        <div class="pm-card" style="text-align: center; padding: 80px 20px;">
+            <span class="material-symbols-rounded" style="font-size: 48px; color: var(--pm-text-disabled); margin-bottom: 16px;">group_off</span>
+            <h3 style="font-size: 20px; color: var(--pm-text); margin-bottom: 8px;">No Candidates Available</h3>
+            <p style="color: var(--pm-text-secondary);">The platform doesn't have any completed interviews yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- TAB 2: Sent Requests -->
+    <div id="panel-requests" class="hr-tab-panel">
+        <div class="filter-pills">
+            <button class="filter-pill active" onclick="filterRequests('all', this)">All</button>
+            <button class="filter-pill" onclick="filterRequests('unread', this)">Unread by Candidate</button>
+            <button class="filter-pill" onclick="filterRequests('read', this)">Read</button>
+        </div>
+        <div id="sentRequestsList">
+            <div style="text-align: center; padding: 40px; color: var(--pm-text-disabled);">Loading requests...</div>
+        </div>
+    </div>
+</main>
+
+<!-- ============ CANDIDATE MODAL (with credit gate) ============ -->
+<div id="candidateModal" class="pixel-modal-overlay">
+    <div class="modal-content-box wide" style="max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; padding: 0;">
+        <div style="padding: 32px 40px; border-bottom: 1px solid var(--pm-border-light); background: var(--pm-bg); position: relative; border-radius: 32px 32px 0 0;">
+            <button onclick="closeCandidateModal()" style="position: absolute; top: 24px; right: 24px; color: var(--pm-text-secondary); background: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--pm-border-light); cursor: pointer; box-shadow: var(--pm-shadow-sm);">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+            <h2 id="modalName" style="font-size: 28px; font-weight: 700; margin-bottom: 4px;">Loading...</h2>
+            <p id="modalRole" style="color: var(--pm-primary); font-weight: 600; font-size: 15px;">...</p>
+            <div id="modalBadges" style="display: flex; gap: 8px; margin-top: 16px;"></div>
+        </div>
+
+        <div style="padding: 40px; display: flex; flex-direction: column; gap: 32px;">
+            <!-- Overview always visible -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div style="background: var(--pm-green-light, #e6f4ea); padding: 24px; border-radius: 20px;">
+                    <h4 style="font-size: 12px; color: #137333; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Core Strengths</h4>
+                    <p id="modalStrengths" style="font-size: 14px; color: #137333; line-height: 1.6;">...</p>
+                </div>
+                <div style="background: var(--pm-yellow-light, #fef7e0); padding: 24px; border-radius: 20px;">
+                    <h4 style="font-size: 12px; color: #b05a00; font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Areas to Improve</h4>
+                    <p id="modalWeaknesses" style="font-size: 14px; color: #b05a00; line-height: 1.6;">...</p>
+                </div>
+            </div>
+
+            <!-- Credit Gate: Interview History -->
+            <div id="creditGate" style="display: none;">
+                <div style="text-align: center; padding: 40px; background: var(--pm-bg); border-radius: 20px; border: 2px dashed var(--pm-border);">
+                    <span class="material-symbols-rounded" style="font-size: 48px; color: var(--pm-primary); margin-bottom: 12px;">lock</span>
+                    <h3 style="font-size: 18px; margin-bottom: 8px;">Unlock Full Interview Details</h3>
+                    <p style="font-size: 13px; color: var(--pm-text-secondary); margin-bottom: 20px;">Spend 1 credit to unlock all interviews for this candidate.<br>Once unlocked, access is permanent.</p>
+                    <button onclick="unlockCandidate()" class="pm-btn pm-btn-primary" id="unlockBtn" style="padding: 12px 32px;">
+                        <span class="material-symbols-rounded" style="font-size:18px">lock_open</span>
+                        Unlock for 1 Credit
+                    </button>
+                    <p id="noCreditMsg" style="display: none; color: var(--pm-red); font-size: 13px; margin-top: 12px; font-weight: 600;">
+                        You have 0 credits. Please buy credits first.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Unlocked: History + Actions -->
+            <div id="unlockedSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h4 style="font-size: 14px; font-weight: 600; color: var(--pm-text); border-bottom: 2px solid var(--pm-border-light); padding-bottom: 8px; flex: 1;">Interview History</h4>
+                    <button onclick="openApproachModal()" class="pm-btn pm-btn-primary" style="padding: 8px 20px; font-size: 13px; margin-left: 16px;">
+                        <span class="material-symbols-rounded" style="font-size:16px">calendar_month</span>
+                        Approach for Interview
+                    </button>
+                </div>
+                <div id="modalHistory" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            </div>
+
+            <div style="display: flex; gap: 16px; margin-top: 8px;">
+                <a id="modalResume" target="_blank" href="#" class="pm-btn pm-btn-primary" style="display: none; flex: 1; padding: 14px;">View Resume</a>
+                <button onclick="closeCandidateModal()" class="pm-btn pm-btn-outline" style="flex: 1; padding: 14px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ APPROACH MODAL ============ -->
+<div id="approachModal" class="pixel-modal-overlay">
+    <div class="modal-content-box" style="max-width: 480px;">
+        <button onclick="closeApproachModal()" style="position: absolute; top: 20px; right: 20px; color: var(--pm-text-secondary); background: var(--pm-bg); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+        <div style="text-align: center; margin-bottom: 28px;">
+            <span class="material-symbols-rounded" style="font-size: 40px; color: var(--pm-primary); margin-bottom: 8px;">event</span>
+            <h2 style="font-size: 22px; font-weight: 700;">Schedule Interview</h2>
+            <p id="approachCandName" style="font-size: 14px; color: var(--pm-text-secondary); margin-top: 4px;">with Candidate</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--pm-text); display: block; margin-bottom: 6px;">Preferred Date</label>
+                <input type="date" id="approachDate" class="pm-input" required>
+            </div>
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--pm-text); display: block; margin-bottom: 6px;">Preferred Time</label>
+                <input type="time" id="approachTime" class="pm-input" required>
+            </div>
+            <div>
+                <label style="font-size: 12px; font-weight: 600; color: var(--pm-text); display: block; margin-bottom: 6px;">Note to Candidate</label>
+                <textarea id="approachNote" class="pm-input" rows="3" placeholder="e.g. We are impressed with your profile and would like to discuss a role..." style="resize: vertical;"></textarea>
+            </div>
+            <button onclick="sendApproachRequest()" class="pm-btn pm-btn-primary" style="width: 100%; padding: 14px; margin-top: 8px;" id="sendApproachBtn">
+                Send Interview Request
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============ BUY CREDITS MODAL ============ -->
+<div id="buyCreditsModal" class="pixel-modal-overlay">
+    <div class="modal-content-box" style="max-width: 440px;">
+        <button onclick="closeBuyCreditsModal()" style="position: absolute; top: 20px; right: 20px; color: var(--pm-text-secondary); background: var(--pm-bg); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+        <div style="text-align: center; margin-bottom: 28px;">
+            <span class="material-symbols-rounded" style="font-size: 40px; color: var(--pm-primary); margin-bottom: 8px;">toll</span>
+            <h2 style="font-size: 22px; font-weight: 700;">Buy HR Credits</h2>
+            <p style="font-size: 14px; color: var(--pm-text-secondary); margin-top: 4px;">Unlock candidate profiles with credits</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div onclick="selectCreditPack('single')" id="pack-single" style="padding: 20px; border: 2px solid var(--pm-primary); border-radius: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: var(--pm-primary-light);">
+                <div>
+                    <div style="font-weight: 700; font-size: 16px;">1 Credit</div>
+                    <div style="font-size: 12px; color: var(--pm-text-secondary);">Unlock 1 candidate</div>
+                </div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--pm-primary);">₹5</div>
+            </div>
+            <div onclick="selectCreditPack('bundle')" id="pack-bundle" style="padding: 20px; border: 2px solid var(--pm-border); border-radius: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <div style="position: absolute; top: -10px; right: 16px; background: var(--pm-green); color: white; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 100px;">SAVE 40%</div>
+                <div>
+                    <div style="font-weight: 700; font-size: 16px;">10 Credits</div>
+                    <div style="font-size: 12px; color: var(--pm-text-secondary);">Unlock 10 candidates</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--pm-green);">₹30</div>
+                    <div style="font-size: 11px; color: var(--pm-text-disabled); text-decoration: line-through;">₹50</div>
+                </div>
+            </div>
+            <button onclick="buyCredits()" class="pm-btn pm-btn-primary" style="width: 100%; padding: 14px; margin-top: 8px;" id="buyBtn">
+                Pay ₹5 for 1 Credit
+            </button>
+            <p style="font-size: 11px; color: var(--pm-text-disabled); text-align: center;">Powered by Razorpay · Secure payment</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ REQUEST DETAIL MODAL ============ -->
+<div id="reqDetailModal" class="pixel-modal-overlay">
+    <div class="modal-content-box" style="max-width: 480px;">
+        <button onclick="closeReqDetailModal()" style="position: absolute; top: 20px; right: 20px; color: var(--pm-text-secondary); background: var(--pm-bg); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer;">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+        <div style="margin-bottom: 24px;">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 4px;" id="reqDetailTitle">Request Details</h3>
+            <p style="font-size: 13px; color: var(--pm-text-secondary);" id="reqDetailDate">...</p>
+        </div>
+        <div id="reqDetailBody" style="display: flex; flex-direction: column; gap: 16px;"></div>
+    </div>
+</div>
+
+<script>
+const UNLOCKED_IDS = {{ unlocked_ids|safe }};
+let currentCandidateId = null;
+let currentCandidateName = '';
+let selectedPack = 'single';
+const csrfToken = '{{ csrf_token }}';
+
+// ==================== TAB SYSTEM ====================
+function switchTab(tab) {
+    document.querySelectorAll('.hr-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.hr-tab-panel').forEach(p => p.classList.remove('active'));
+    
+    event.currentTarget.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    
+    if (tab === 'requests') loadSentRequests();
+}
+
+// ==================== CANDIDATE MODAL ====================
+async function openCandidateModal(userId) {
+    currentCandidateId = userId;
+    document.body.style.overflow = 'hidden';
+    const modal = document.getElementById('candidateModal');
+    modal.classList.add('show');
+    
+    document.getElementById('modalName').textContent = 'Fetching profile...';
+    document.getElementById('modalRole').textContent = 'Please wait';
+    document.getElementById('modalStrengths').textContent = '...';
+    document.getElementById('modalWeaknesses').textContent = '...';
+    document.getElementById('modalHistory').innerHTML = '';
+    document.getElementById('modalResume').style.display = 'none';
+    document.getElementById('modalBadges').innerHTML = '';
+
+    // Check unlock status
+    const isUnlocked = UNLOCKED_IDS.includes(parseInt(userId));
+
+    try {
+        const response = await fetch(`/interviews/api/candidate/${userId}/`);
+        const data = await response.json();
+        
+        if (data.success) {
+            currentCandidateName = data.username;
+            document.getElementById('modalName').textContent = data.username;
+            document.getElementById('modalRole').textContent = `${data.level} ${data.role} · ${data.total_interviews} Sessions`;
+            
+            if (data.feedback) {
+                document.getElementById('modalStrengths').textContent = data.feedback.strengths || 'N/A';
+                document.getElementById('modalWeaknesses').textContent = data.feedback.improvements || 'N/A';
+            }
+
+            if (data.badges) {
+                document.getElementById('modalBadges').innerHTML = data.badges.map(b => 
+                    `<span class="pm-chip" style="background:var(--pm-primary-light); color:var(--pm-primary);">${b}</span>`
+                ).join('');
+            }
+
+            if (isUnlocked) {
+                showUnlockedContent(data);
+            } else {
+                // Show credit gate
+                document.getElementById('creditGate').style.display = 'block';
+                document.getElementById('unlockedSection').style.display = 'none';
+                
+                const credits = parseInt(document.getElementById('creditCount').textContent);
+                if (credits < 1) {
+                    document.getElementById('unlockBtn').style.display = 'none';
+                    document.getElementById('noCreditMsg').style.display = 'block';
+                } else {
+                    document.getElementById('unlockBtn').style.display = 'inline-flex';
+                    document.getElementById('noCreditMsg').style.display = 'none';
+                }
+                
+                // Store data for later use after unlock
+                window._pendingCandidateData = data;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        document.getElementById('modalName').textContent = 'Connection Error';
+    }
+}
+
+function showUnlockedContent(data) {
+    document.getElementById('creditGate').style.display = 'none';
+    document.getElementById('unlockedSection').style.display = 'block';
+    
+    if (data.resume_url) {
+        const resBtn = document.getElementById('modalResume');
+        resBtn.href = data.resume_url;
+        resBtn.style.display = 'inline-flex';
+    }
+    
+    let historyHtml = '';
+    if (data.history && data.history.length > 0) {
+        data.history.forEach(h => {
+            historyHtml += `
+                <a href="/analytics/interview/${h.id}/" style="text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; padding: 16px; background: white; border: 1px solid var(--pm-border-light); border-radius: 16px; transition: 0.2s;" onmouseover="this.style.borderColor='var(--pm-primary)'" onmouseout="this.style.borderColor='var(--pm-border-light)'">
+                    <div>
+                        <div style="font-weight: 600; font-size: 15px; color: var(--pm-text);">${h.role}</div>
+                        <div style="font-size: 12px; color: var(--pm-text-secondary); margin-top: 4px;">${h.date}</div>
+                    </div>
+                    <div style="display: flex; gap: 24px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--pm-primary);">${h.tech}</div>
+                            <div style="font-size: 10px; color: var(--pm-text-disabled); text-transform: uppercase; font-weight: 600;">Tech</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--pm-green, #34a853);">${h.comm}</div>
+                            <div style="font-size: 10px; color: var(--pm-text-disabled); text-transform: uppercase; font-weight: 600;">Comm</div>
+                        </div>
+                    </div>
+                </a>
+            `;
+        });
+    } else {
+        historyHtml = '<p style="color: var(--pm-text-disabled); text-align: center; padding: 20px;">No completed sessions.</p>';
+    }
+    document.getElementById('modalHistory').innerHTML = historyHtml;
+}
+
+async function unlockCandidate() {
+    const btn = document.getElementById('unlockBtn');
+    btn.textContent = 'Unlocking...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch(`/user/hr/api/unlock/${currentCandidateId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            UNLOCKED_IDS.push(parseInt(currentCandidateId));
+            document.getElementById('creditCount').textContent = data.credits;
+            
+            if (window._pendingCandidateData) {
+                showUnlockedContent(window._pendingCandidateData);
+            }
+        } else if (data.error === 'no_credits') {
+            btn.style.display = 'none';
+            document.getElementById('noCreditMsg').style.display = 'block';
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    
+    btn.textContent = 'Unlock for 1 Credit';
+    btn.disabled = false;
+}
+
+function closeCandidateModal() {
+    document.getElementById('candidateModal').classList.remove('show');
+    document.body.style.overflow = '';
+    currentCandidateId = null;
+    window._pendingCandidateData = null;
+}
+
+// ==================== APPROACH MODAL ====================
+function openApproachModal() {
+    document.getElementById('approachCandName').textContent = 'with ' + currentCandidateName;
+    document.getElementById('approachDate').value = '';
+    document.getElementById('approachTime').value = '';
+    document.getElementById('approachNote').value = '';
+    document.getElementById('approachModal').classList.add('show');
+}
+function closeApproachModal() {
+    document.getElementById('approachModal').classList.remove('show');
+}
+
+async function sendApproachRequest() {
+    const btn = document.getElementById('sendApproachBtn');
+    const date = document.getElementById('approachDate').value;
+    const time = document.getElementById('approachTime').value;
+    const note = document.getElementById('approachNote').value;
+    
+    if (!date || !time) {
+        alert('Please select both date and time.');
+        return;
+    }
+    
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/user/hr/api/send-request/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({
+                candidate_id: currentCandidateId,
+                scheduled_date: date,
+                scheduled_time: time,
+                note: note
+            })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            closeApproachModal();
+            alert('Interview request sent successfully!');
+        } else {
+            alert('Failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Network error');
+    }
+    
+    btn.textContent = 'Send Interview Request';
+    btn.disabled = false;
+}
+
+// ==================== BUY CREDITS ====================
+function openBuyCreditsModal() {
+    document.getElementById('buyCreditsModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+    selectCreditPack('single');
+}
+function closeBuyCreditsModal() {
+    document.getElementById('buyCreditsModal').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function selectCreditPack(pack) {
+    selectedPack = pack;
+    const single = document.getElementById('pack-single');
+    const bundle = document.getElementById('pack-bundle');
+    const btn = document.getElementById('buyBtn');
+    
+    if (pack === 'single') {
+        single.style.border = '2px solid var(--pm-primary)';
+        single.style.background = 'var(--pm-primary-light)';
+        bundle.style.border = '2px solid var(--pm-border)';
+        bundle.style.background = 'white';
+        btn.textContent = 'Pay ₹5 for 1 Credit';
+    } else {
+        bundle.style.border = '2px solid var(--pm-primary)';
+        bundle.style.background = 'var(--pm-primary-light)';
+        single.style.border = '2px solid var(--pm-border)';
+        single.style.background = 'white';
+        btn.textContent = 'Pay ₹30 for 10 Credits';
+    }
+}
+
+async function buyCredits() {
+    const btn = document.getElementById('buyBtn');
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+    
+    try {
+        const res = await fetch('/payments/hr/create-order/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ pack: selectedPack })
+        });
+        const order = await res.json();
+        
+        if (order.id) {
+            const options = {
+                key: '{{ razorpay_key_id }}',
+                amount: order.amount,
+                currency: order.currency,
+                name: 'PrepMind AI',
+                description: selectedPack === 'bundle' ? '10 HR Credits' : '1 HR Credit',
+                order_id: order.id,
+                handler: async function(response) {
+                    // Verify payment on server
+                    const formData = new FormData();
+                    formData.append('razorpay_order_id', response.razorpay_order_id);
+                    formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                    formData.append('razorpay_signature', response.razorpay_signature);
+                    
+                    try {
+                        const verifyRes = await fetch('/payments/hr/verify-payment/', {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': csrfToken },
+                            body: formData
+                        });
+                        const verifyData = await verifyRes.json();
+                        
+                        if (verifyData.status === 'success') {
+                            document.getElementById('creditCount').textContent = verifyData.credits;
+                            closeBuyCreditsModal();
+                            alert('Payment successful! Credits added.');
+                        } else {
+                            alert('Payment verification failed.');
+                        }
+                    } catch (e) {
+                        alert('Verification error. Please contact support.');
+                    }
+                },
+                prefill: {
+                    name: '{{ user.get_full_name|default:user.username }}',
+                    email: '{{ user.email }}'
+                },
+                theme: { color: '#1a73e8' }
+            };
+            
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+                alert('Payment failed. Please try again.');
+            });
+            rzp.open();
+        } else {
+            alert('Could not create order. Try again.');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Network error. Please try again.');
+    }
+    
+    btn.textContent = selectedPack === 'bundle' ? 'Pay ₹30 for 10 Credits' : 'Pay ₹5 for 1 Credit';
+    btn.disabled = false;
+}
+
+// ==================== SENT REQUESTS ====================
+async function loadSentRequests(filter = 'all') {
+    const container = document.getElementById('sentRequestsList');
+    container.innerHTML = '<div style="text-align: center; padding: 40px;"><div style="width:30px; height:30px; border:3px solid #eee; border-top:3px solid var(--pm-primary); border-radius:50%; animation: spin 1s linear infinite; margin: 0 auto;"></div></div>';
+    
+    let url = '/user/hr/api/sent-requests/';
+    if (filter !== 'all') url += '?filter=' + filter;
+    
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.success && data.requests.length > 0) {
+            container.innerHTML = data.requests.map(r => `
+                <div class="req-card ${r.is_read ? '' : 'unread'}" onclick="showReqDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 15px;">${r.candidate_name}</div>
+                            <div style="font-size: 12px; color: var(--pm-text-secondary);">${r.candidate_role} · ${r.scheduled_date} at ${r.scheduled_time}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="pm-chip" style="background: ${r.is_read ? '#e6f4ea' : '#fef7e0'}; color: ${r.is_read ? '#137333' : '#b05a00'}; font-size: 11px;">
+                                ${r.is_read ? 'Read' : 'Unread'}
+                            </span>
+                            <span class="material-symbols-rounded" style="font-size: 18px; color: var(--pm-text-disabled);">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: var(--pm-text-disabled);"><span class="material-symbols-rounded" style="font-size: 40px; margin-bottom: 8px;">inbox</span><p>No requests sent yet.</p></div>';
+        }
+    } catch (e) {
+        container.innerHTML = '<p style="text-align: center; color: var(--pm-red);">Error loading requests</p>';
+    }
+}
+
+function filterRequests(filter, el) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    loadSentRequests(filter);
+}
+
+function showReqDetail(r) {
+    document.getElementById('reqDetailTitle').textContent = 'Request to ' + r.candidate_name;
+    document.getElementById('reqDetailDate').textContent = 'Sent on ' + r.created_at;
+    document.getElementById('reqDetailBody').innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div style="background: var(--pm-bg); padding: 16px; border-radius: 12px;">
+                <div style="font-size: 11px; color: var(--pm-text-disabled); text-transform: uppercase; font-weight: 600;">Scheduled Date</div>
+                <div style="font-size: 15px; font-weight: 600; margin-top: 4px;">${r.scheduled_date}</div>
+            </div>
+            <div style="background: var(--pm-bg); padding: 16px; border-radius: 12px;">
+                <div style="font-size: 11px; color: var(--pm-text-disabled); text-transform: uppercase; font-weight: 600;">Scheduled Time</div>
+                <div style="font-size: 15px; font-weight: 600; margin-top: 4px;">${r.scheduled_time}</div>
+            </div>
+        </div>
+        <div style="background: var(--pm-bg); padding: 16px; border-radius: 12px;">
+            <div style="font-size: 11px; color: var(--pm-text-disabled); text-transform: uppercase; font-weight: 600; margin-bottom: 6px;">Your Note</div>
+            <div style="font-size: 14px; line-height: 1.6;">${r.note || 'No note attached.'}</div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <span class="pm-chip" style="background: ${r.is_read ? '#e6f4ea' : '#fef7e0'}; color: ${r.is_read ? '#137333' : '#b05a00'};">
+                ${r.is_read ? '✓ Read by candidate' : '⏳ Not yet read'}
+            </span>
+            <span class="pm-chip" style="background: var(--pm-bg); color: var(--pm-text-secondary);">
+                Status: ${r.status}
+            </span>
+        </div>
+    `;
+    document.getElementById('reqDetailModal').classList.add('show');
+}
+function closeReqDetailModal() {
+    document.getElementById('reqDetailModal').classList.remove('show');
+}
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endblock %}

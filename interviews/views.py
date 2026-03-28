@@ -402,6 +402,7 @@ def get_candidate_details(request, user_id):
         sessions = InterviewSession.objects.filter(user=user, technical_score__isnull=False).order_by('start_time')
         
         history = [{
+            'id': s.id,
             'date': s.start_time.strftime('%b %d'),
             'tech': s.technical_score,
             'comm': s.communication_score,

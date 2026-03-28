@@ -92,3 +92,78 @@ def verify_payment(request):
                 payment.save()
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+# ============= HR CREDIT PAYMENTS =============
+
+@login_required
+@csrf_exempt
+def hr_create_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            pack_type = data.get('pack', 'single')
+        except:
+            pack_type = 'single'
+
+        if pack_type == 'bundle':
+            amount_in_inr = 30
+            credits_to_add = 10
+        else:
+            amount_in_inr = 5
+            credits_to_add = 1
+            
+        amount_in_paise = int(amount_in_inr * 100)
+        
+        razorpay_order = client.order.create({
+            'amount': amount_in_paise,
+            'currency': 'INR',
+            'payment_capture': '1'
+        })
+        
+        Payment.objects.create(
+            user=request.user,
+            razorpay_order_id=razorpay_order['id'],
+            amount=amount_in_inr,
+            credits_count=credits_to_add,
+            payment_type='hr_credit',
+            status='PENDING'
+        )
+        
+        return JsonResponse(razorpay_order)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+@csrf_exempt
+def hr_verify_payment(request):
+    if request.method == 'POST':
+        data = request.POST
+        
+        params_dict = {
+            'razorpay_order_id': data.get('razorpay_order_id'),
+            'razorpay_payment_id': data.get('razorpay_payment_id'),
+            'razorpay_signature': data.get('razorpay_signature')
+        }
+        
+        try:
+            client.utility.verify_payment_signature(params_dict)
+            
+            payment = Payment.objects.get(razorpay_order_id=data.get('razorpay_order_id'))
+            payment.razorpay_payment_id = data.get('razorpay_payment_id')
+            payment.razorpay_signature = data.get('razorpay_signature')
+            payment.status = 'COMPLETED'
+            payment.save()
+            
+            user = request.user
+            user.hr_credits += payment.credits_count
+            user.save()
+            
+            return JsonResponse({'status': 'success', 'credits': user.hr_credits})
+        except Exception as e:
+            payment = Payment.objects.filter(razorpay_order_id=data.get('razorpay_order_id')).first()
+            if payment:
+                payment.status = 'FAILED'
+                payment.save()
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+

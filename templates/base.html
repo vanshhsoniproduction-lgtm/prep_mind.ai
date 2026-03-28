@@ -206,10 +206,12 @@
                                     <span class="material-symbols-rounded" style="font-size:18px">person</span>
                                     Profile Settings
                                 </a>
+                                {% if not user.is_hr %}
                                 <a href="{% url 'payments:pricing' %}">
                                     <span class="material-symbols-rounded" style="font-size:18px">receipt_long</span>
                                     Billing & Credits
                                 </a>
+                                {% endif %}
                                 <div style="border-top: 1px solid var(--pm-border-light); margin: 4px 0;"></div>
                                 <a href="{% url 'accounts:logout' %}" style="display:flex; align-items:center; gap:12px; padding:12px 20px; color:var(--pm-red); font-size:14px; text-decoration:none;">
                                     <span class="material-symbols-rounded" style="font-size:18px">logout</span>
@@ -266,7 +268,7 @@
                     <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
                         <li><a href="/" style="color: var(--pm-text-secondary); font-size: 14px;">Features</a></li>
                         <li><a href="{% url 'payments:pricing' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Pricing</a></li>
-                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Enterprise</a></li>
+                        <li><a href="{% url 'accounts:hr_login' %}" style="color: var(--pm-text-secondary); font-size: 14px; font-weight: 600;">HR / Employers Portal</a></li>
                         <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Demo</a></li>
                     </ul>
                 </div>
