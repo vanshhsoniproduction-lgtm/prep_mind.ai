@@ -3,222 +3,402 @@
 
 {% block extra_css %}
 <style>
+/* Pixel-style Animated Background */
+.pixel-bg {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden; z-index: 0; pointer-events: none;
+    background: transparent;
+}
+.pixel-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(100px); opacity: 0.6;
+    animation: floatOrb 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+.orb-1 { width: 600px; height: 600px; background: rgba(26, 115, 232, 0.4); top: -200px; left: -100px; } /* Blue */
+.orb-2 { width: 500px; height: 500px; background: rgba(234, 67, 53, 0.3); top: 10%; right: -100px; animation-delay: -5s; } /* Red */
+.orb-3 { width: 700px; height: 700px; background: rgba(251, 188, 4, 0.25); bottom: -200px; left: 15%; animation-delay: -10s; } /* Yellow */
+.orb-4 { width: 550px; height: 550px; background: rgba(52, 168, 83, 0.3); bottom: 50px; right: 5%; animation-delay: -15s; } /* Green */
+
+@keyframes floatOrb {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(80px, -60px) scale(1.1); }
+    66% { transform: translate(-40px, 80px) scale(0.95); }
+    100% { transform: translate(30px, -40px) scale(1.05); }
+}
+
+/* Scroll Animation Classes */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hero Section */
 .landing-hero {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; text-align: center; padding: 60px 24px 80px;
+    position: relative; padding: 120px 24px 100px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.badge-pill {
+    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+    border: 1px solid rgba(26, 115, 232, 0.2); color: var(--pm-primary);
+    padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    margin-bottom: 24px; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.1);
 }
 .landing-hero h1 {
-    font-size: 56px; font-weight: 700; max-width: 700px;
-    line-height: 1.15; margin-bottom: 20px; letter-spacing: -1px;
+    font-size: 64px; font-weight: 700; max-width: 800px;
+    line-height: 1.1; margin-bottom: 24px; letter-spacing: -1.5px;
+    color: #1c1c1c;
 }
 .landing-hero h1 .gradient-text {
-    background: linear-gradient(135deg, var(--pm-primary), var(--pm-green));
+    background: linear-gradient(135deg, var(--pm-primary), #bd44fe);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 .landing-hero p.subtitle {
-    font-size: 18px; color: var(--pm-text-secondary); max-width: 560px;
-    margin: 0 auto 40px; line-height: 1.7;
+    font-size: 20px; color: var(--pm-text-secondary); max-width: 600px;
+    margin: 0 auto 48px; line-height: 1.6;
 }
-.landing-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.landing-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
+.cta-primary {
+    padding: 16px 40px; font-size: 18px; border-radius: 100px;
+    background: #1a73e8; color: white; display: inline-flex; align-items: center; gap: 12px;
+    font-weight: 600; border: none; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(26, 115, 232, 0.3); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cta-primary:hover {
+    transform: translateY(-2px); box-shadow: 0 12px 32px rgba(26, 115, 232, 0.4);
+}
+.cta-secondary {
+    padding: 16px 40px; font-size: 18px; border-radius: 100px;
+    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+    color: #202124; display: inline-flex; align-items: center; gap: 12px;
+    font-weight: 600; border: 1px solid var(--pm-border); cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s;
+}
+.cta-secondary:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.08); }
+
+/* Companies Section */
+.trusted-by { padding: 40px 24px; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.5); text-align: center; }
+.trusted-by p { font-size: 13px; font-weight: 600; color: var(--pm-text-disabled); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; }
+.comp-logos { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; align-items: center; opacity: 0.6; filter: grayscale(100%); transition: all 0.3s; }
+.comp-logos:hover { opacity: 0.9; filter: grayscale(0%); }
+.comp-logos span { font-size: 20px; font-weight: 700; font-family: 'Google Sans', sans-serif; }
+
+/* Demo Window */
 .demo-window {
-    max-width: 720px; width: 100%; margin: 60px auto 0; border-radius: var(--pm-radius-lg);
-    border: 1px solid var(--pm-border-light); background: var(--pm-surface);
-    box-shadow: var(--pm-shadow-lg); overflow: hidden; text-align: left;
-    animation: slideUp .7s ease-out;
+    max-width: 800px; width: 100%; margin: 80px auto 0; border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.4); background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.1); overflow: hidden; text-align: left;
+    transform: perspective(1000px) rotateX(2deg); transition: transform 0.5s;
 }
-.demo-titlebar {
-    display: flex; align-items: center; gap: 8px; padding: 14px 20px;
-    background: #f1f3f4; border-bottom: 1px solid var(--pm-border-light);
-}
+.demo-window:hover { transform: perspective(1000px) rotateX(0deg); box-shadow: 0 32px 80px rgba(26, 115, 232, 0.15); }
+.demo-titlebar { display: flex; align-items: center; gap: 8px; padding: 16px 24px; background: rgba(248, 249, 250, 0.8); border-bottom: 1px solid rgba(0,0,0,0.05); }
 .demo-dot { width: 12px; height: 12px; border-radius: 50%; }
-.demo-messages { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-.demo-msg { display: flex; gap: 12px; align-items: flex-start; }
-.demo-msg.user { flex-direction: row-reverse; }
-.demo-avatar {
-    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
-}
-.demo-avatar.ai { background: var(--pm-primary-light); color: var(--pm-primary); }
-.demo-avatar.user { background: #e8eaed; color: var(--pm-text-secondary); }
-.demo-bubble {
-    padding: 12px 18px; border-radius: 18px; font-size: 14px; line-height: 1.6;
-    max-width: 480px;
-}
-.demo-msg:not(.user) .demo-bubble { background: #f1f3f4; color: var(--pm-text); border-top-left-radius: 4px; }
-.demo-msg.user .demo-bubble { background: var(--pm-primary); color: #fff; border-top-right-radius: 4px; }
+
+/* General Sections */
+.section { padding: 120px 24px; position: relative; z-index: 2; }
+.section-title { text-align: center; margin-bottom: 60px; }
+.section-title h2 { font-size: 40px; font-weight: 700; margin-bottom: 16px; color: #1c1c1c; }
+.section-title p { font-size: 18px; color: var(--pm-text-secondary); max-width: 600px; margin: 0 auto; }
+
+/* Features Grid */
 .features-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
-    max-width: 960px; width: 100%; padding: 80px 24px 100px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px;
+    max-width: 1100px; margin: 0 auto;
 }
 .feature-card {
-    padding: 28px; border-radius: var(--pm-radius-lg); background: var(--pm-surface);
-    border: 1px solid var(--pm-border-light); transition: all var(--pm-transition);
+    padding: 40px 32px; border-radius: 24px; background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.feature-card:hover { box-shadow: var(--pm-shadow-md); transform: translateY(-2px); }
+.feature-card:hover { box-shadow: 0 20px 48px rgba(0,0,0,0.08); transform: translateY(-4px); }
 .feature-icon {
-    width: 48px; height: 48px; border-radius: var(--pm-radius-md);
+    width: 64px; height: 64px; border-radius: 16px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; margin-bottom: 16px;
+    font-size: 28px; margin-bottom: 24px;
 }
-.feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.feature-card p { font-size: 14px; color: var(--pm-text-secondary); line-height: 1.6; }
+.feature-card h3 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+.feature-card p { font-size: 16px; color: var(--pm-text-secondary); line-height: 1.6; }
+
+/* How It Works */
+.steps-container { max-width: 900px; margin: 0 auto; }
+.step-item { display: flex; align-items: flex-start; gap: 32px; margin-bottom: 48px; background: #fff; padding: 32px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.03); }
+.step-num { width: 48px; height: 48px; background: var(--pm-primary-light); color: var(--pm-primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; }
+.step-content h4 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.step-content p { color: var(--pm-text-secondary); font-size: 16px; line-height: 1.6; }
+
+/* Stats Section */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; background: var(--pm-primary); border-radius: 32px; padding: 60px; color: white; text-align: center; }
+.stat-box h3 { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+.stat-box p { font-size: 16px; opacity: 0.9; }
+
+/* Bottom CTA */
+.bottom-cta { text-align: center; padding: 120px 24px; background: linear-gradient(to bottom, transparent, rgba(26,115,232,0.05)); }
+.bottom-cta h2 { font-size: 44px; font-weight: 700; margin-bottom: 24px; }
+
+/* Specific Colors for features */
+.fc-1 { background: rgba(26, 115, 232, 0.1); color: #1a73e8; }
+.fc-2 { background: rgba(52, 168, 83, 0.1); color: #34a853; }
+.fc-3 { background: rgba(251, 188, 4, 0.2); color: #e37400; }
+.fc-4 { background: rgba(234, 67, 53, 0.1); color: #ea4335; }
+
 @media (max-width: 768px) {
-    .landing-hero h1 { font-size: 36px; }
-    .features-grid { grid-template-columns: 1fr; max-width: 400px; }
+    .landing-hero h1 { font-size: 42px; }
+    .features-grid, .stats-grid { grid-template-columns: 1fr; }
+    .demo-window { transform: none; }
+    .step-item { flex-direction: column; gap: 16px; }
 }
 
-/* Guest Modal Styles */
+/* Modal specific logic from previous */
 .guest-modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    z-index: 2000; display: none; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.3s ease;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(16px);
+    z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;
 }
 .guest-modal-overlay.show { display: flex; opacity: 1; }
 .guest-modal {
-    background: var(--pm-surface); border-radius: var(--pm-radius-xl);
-    padding: 40px; width: 100%; max-width: 440px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.12);
-    border: 1px solid var(--pm-border-light);
-    transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    background: #fff; border-radius: 24px; padding: 48px; width: 100%; max-width: 460px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.05);
+    transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.guest-modal-overlay.show .guest-modal { transform: translateY(0); }
-.guest-modal h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: var(--pm-text); }
-.guest-modal p { color: var(--pm-text-secondary); margin-bottom: 28px; font-size: 15px; }
-.guest-form { display: flex; flex-direction: column; gap: 20px; }
-.guest-input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--pm-text-secondary); margin-bottom: 6px; }
-.guest-input-group input {
-    width: 100%; padding: 14px 16px; border-radius: var(--pm-radius-md);
-    border: 2px solid var(--pm-border-light); font-size: 16px; outline: none;
-    transition: all var(--pm-transition);
-}
-.guest-input-group input:focus { border-color: var(--pm-primary); box-shadow: 0 0 0 4px var(--pm-primary-light); }
-.guest-error { color: var(--pm-red); font-size: 13px; margin-top: -12px; display: none; }
+.guest-modal-overlay.show .guest-modal { transform: translateY(0) scale(1); }
+.guest-modal h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; color: var(--pm-text); }
+.guest-input-group label { display: block; font-size: 12px; font-weight: 700; color: var(--pm-text-secondary); margin-bottom: 8px; letter-spacing: 1px; }
+.guest-input-group input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid var(--pm-border-light); font-size: 16px; outline: none; background: #f8f9fa; transition: all 0.2s; }
+.guest-input-group input:focus { border-color: var(--pm-primary); background: #fff; box-shadow: 0 0 0 4px var(--pm-primary-light); }
 </style>
 {% endblock %}
 
 {% block content %}
 
+<!-- Pixel Animated Background -->
+<div class="pixel-bg">
+    <div class="pixel-orb orb-1"></div>
+    <div class="pixel-orb orb-2"></div>
+    <div class="pixel-orb orb-3"></div>
+    <div class="pixel-orb orb-4"></div>
+</div>
+
 <!-- Hero -->
-<section class="landing-hero">
-    <h1 class="animate-fadeIn">Your AI-powered <span class="gradient-text">mock interviewer</span></h1>
-    <p class="subtitle animate-fadeIn" style="animation-delay:.1s">
-        Practice realistic voice interviews with AI. Get instant feedback on technical skills, communication, and confidence.
-    </p>
-    <div class="landing-cta animate-fadeIn" style="animation-delay:.2s">
+<section class="landing-hero animate-slideUp">
+    <div style="position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <h1>Pass your next tech interview with <span class="gradient-text">AI Confidence</span>.</h1>
+        <p class="subtitle">
+            Experience hyper-realistic voice and coding mock interviews. Get actionable feedback on your technical accuracy, communication style, and confidence.
+        </p>
+    
+    <div class="landing-cta">
         {% if user.is_authenticated %}
-            <a href="{% url 'core:dashboard' %}" class="pm-btn pm-btn-primary" style="padding: 14px 36px; font-size: 16px;">
-                <span class="material-symbols-rounded" style="font-size:20px">play_arrow</span>
-                Start Mock Interview
+            <a href="{% url 'core:dashboard' %}" class="cta-primary">
+                <span class="material-symbols-rounded">dashboard</span>
+                Go to Dashboard
             </a>
         {% else %}
-            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
-                    {% csrf_token %}
-                    <button type="submit" class="pm-btn pm-btn-primary" style="padding: 14px 36px; font-size: 16px; gap: 10px;">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:20px;height:20px;background:#fff;border-radius:50%;padding:2px;">
-                        Continue with Google
-                    </button>
-                </form>
-                <button type="button" id="guestBtn" class="pm-btn" style="padding: 14px 36px; font-size: 16px; gap: 10px; background: #e8eaed; color: #1c1c1c; border-radius: 99px; font-weight: 600; border: 1px solid transparent; transition: all .2s;">
-                    <span class="material-symbols-rounded" style="font-size:20px; font-variation-settings: 'FILL' 0;">person</span>
-                    Demo Experience
+            <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="cta-primary">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width:22px;height:22px;background:#fff;border-radius:50%;padding:2px;">
+                    Start for Free
                 </button>
-            </div>
+            </form>
+            <button type="button" id="guestBtn" class="cta-secondary">
+                <span class="material-symbols-rounded" style="font-variation-settings: 'FILL' 0;">person</span>
+                Try Demo Environment
+            </button>
         {% endif %}
     </div>
 
-    <!-- Demo Window -->
+    <!-- Demo Window Snippet -->
     <div class="demo-window">
         <div class="demo-titlebar">
             <div class="demo-dot" style="background:#ea4335"></div>
             <div class="demo-dot" style="background:#fbbc04"></div>
             <div class="demo-dot" style="background:#34a853"></div>
-            <span style="margin-left:12px;font-size:13px;color:var(--pm-text-secondary);font-weight:500">PrepMind AI Interview</span>
+            <span style="margin-left:12px;font-size:13px;color:var(--pm-text-secondary);font-weight:600"><i class="fas fa-lock" style="margin-right:6px; font-size:10px;"></i> interview.prepmind.ai/room</span>
         </div>
-        <div class="demo-messages">
-            <div class="demo-msg">
-                <div class="demo-avatar ai"><i class="fas fa-robot"></i></div>
-                <div class="demo-bubble">Hello! I'll be your interviewer today. I see you built a Django API. Can you explain your database choice?</div>
+        <div style="padding: 32px; display: flex; flex-direction: column; gap: 24px;">
+            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #e8f0fe; color: #1a73e8; display: flex; align-items: center; justify-content: center;"><i class="fas fa-robot"></i></div>
+                <div style="background: #f8f9fa; padding: 16px 20px; border-radius: 20px; border-top-left-radius: 4px; font-size: 15px; max-width: 80%;">
+                    I see from your resume that you deployed a microservices architecture. Can you talk about how you handled service discovery and load balancing?
+                </div>
             </div>
-            <div class="demo-msg user">
-                <div class="demo-avatar user"><i class="fas fa-user"></i></div>
-                <div class="demo-bubble">Yes, I chose PostgreSQL for its robust JSON support and ACID compliance for our order system.</div>
+            <div style="display: flex; gap: 16px; align-items: flex-start; flex-direction: row-reverse;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #e8eaed; color: #5f6368; display: flex; align-items: center; justify-content: center;"><i class="fas fa-user"></i></div>
+                <div style="background: var(--pm-primary); color: white; padding: 16px 20px; border-radius: 20px; border-top-right-radius: 4px; font-size: 15px; max-width: 80%;">
+                    Yes, we used Kubernetes. For service discovery, we relied on CoreDNS internal networking, and paired it with NGINX Ingress for external traffic routing.
+                </div>
             </div>
-            <div class="demo-msg">
-                <div class="demo-avatar ai"><i class="fas fa-robot"></i></div>
-                <div class="demo-bubble">Great. How did you optimize query performance for large read volumes?</div>
+        </div>
+    </div>
+    </div>
+</section>
+
+<!-- Trusted By -->
+<div class="trusted-by reveal">
+    <p>Engineers preparing for top companies</p>
+    <div class="comp-logos">
+        <span>Google</span>
+        <span>Meta</span>
+        <span>Amazon</span>
+        <span>Netflix</span>
+        <span>Microsoft</span>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section class="section" style="background: transparent;">
+    <div class="section-title">
+        <h2>Everything you need to succeed</h2>
+        <p>A complete suite of tools designed to mirror real-world FAANG interviews.</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card reveal" style="transition-delay: 0.1s;">
+            <div class="feature-icon fc-1"><span class="material-symbols-rounded">record_voice_over</span></div>
+            <h3>Real-time Voice AI</h3>
+            <p>Don't type your answers. Speak naturally to our advanced AI interviewer powered by ElevenLabs voice synthesis and Gemini LLMs.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay: 0.2s;">
+            <div class="feature-icon fc-2"><span class="material-symbols-rounded">code_blocks</span></div>
+            <h3>Integrated IDE</h3>
+            <p>Seamlessly transition from behavioral questions to live algorithmic coding challenges. Write, execute, and evaluate Python, Javascript, and more in real-time.</p>
+        </div>
+        <div class="feature-card reveal" style="transition-delay: 0.3s;">
+            <div class="feature-icon fc-3"><span class="material-symbols-rounded">troubleshoot</span></div>
+            <h3>Deep Diagnostics</h3>
+            <p>Get instant scores on your Technical Knowledge, Communication Clarity, and Confidence levels. Review exactly where you went wrong.</p>
+        </div>
+         <div class="feature-card reveal" style="transition-delay: 0.4s;">
+            <div class="feature-icon fc-4"><span class="material-symbols-rounded">contact_page</span></div>
+            <h3>Resume Context</h3>
+            <p>Upload your resume. The AI will dynamically read your past experiences and tailor the interview questions specifically to your background.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="section">
+    <div class="section-title">
+        <h2>How PrepMind works</h2>
+        <p>Your journey from nervous candidate to confident engineer.</p>
+    </div>
+    <div class="steps-container">
+        <div class="step-item reveal">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <h4>Configure your Target</h4>
+                <p>Tell the AI what role you're applying for (e.g., Senior Backend Engineer), your experience level, and the company persona you want to simulate.</p>
+            </div>
+        </div>
+        <div class="step-item reveal">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <h4>Take the Interview</h4>
+                <p>Join the virtual room. Enable your microphone and camera. Have a realistic, multi-stage conversation spanning both architecture design and live coding.</p>
+            </div>
+        </div>
+        <div class="step-item reveal">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <h4>Review and Improve</h4>
+                <p>Receive an exhaustive post-interview report. Analyze your multi-month progress calendar on your Dashboard to visualize your consistency.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Features -->
-<div class="features-grid">
-    <div class="feature-card">
-        <div class="feature-icon" style="background:var(--pm-primary-light);color:var(--pm-primary)">
-            <span class="material-symbols-rounded">mic</span>
+<!-- Stats Box -->
+<section style="padding: 0 24px 80px;">
+    <div class="stats-grid reveal">
+        <div class="stat-box">
+            <h3>98%</h3>
+            <p>Confidence Boost</p>
         </div>
-        <h3>Full Voice Interaction</h3>
-        <p>Speak naturally just like a real interview. PrepMind listens, analyzes, and responds in real-time.</p>
-    </div>
-    <div class="feature-card">
-        <div class="feature-icon" style="background:var(--pm-green-light);color:var(--pm-green)">
-            <span class="material-symbols-rounded">code</span>
+        <div class="stat-box">
+            <h3>50k+</h3>
+            <p>Interviews Hosted</p>
         </div>
-        <h3>Built-in Coding</h3>
-        <p>Seamlessly transition from system design discussion to live coding in a full-featured editor.</p>
-    </div>
-    <div class="feature-card">
-        <div class="feature-icon" style="background:var(--pm-yellow-light);color:#e37400">
-            <span class="material-symbols-rounded">analytics</span>
+        <div class="stat-box">
+            <h3>24/7</h3>
+            <p>Availability</p>
         </div>
-        <h3>Smart Analytics</h3>
-        <p>Get granular breakdown of your confidence, filler word usage, and technical accuracy.</p>
     </div>
-</div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="bottom-cta reveal">
+    <h2>Ready to land the offer?</h2>
+    <p style="font-size: 20px; color: var(--pm-text-secondary); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">
+        Stop guessing how you'll perform under pressure. Start practicing with the world's most intelligent mock interviewer today.
+    </p>
+    {% if not user.is_authenticated %}
+        <form action="{% provider_login_url 'google' %}" method="post" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" class="cta-primary" style="padding: 20px 48px; font-size: 20px;">
+                Create Free Account
+            </button>
+        </form>
+    {% else %}
+        <a href="{% url 'core:dashboard' %}" class="cta-primary" style="padding: 20px 48px; font-size: 20px;">
+            Return to Dashboard
+        </a>
+    {% endif %}
+</section>
 
 <!-- Guest Login Modal -->
 <div id="guestModalOverlay" class="guest-modal-overlay">
     <div class="guest-modal">
-        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div class="pm-logo-icon" style="width: 32px; height: 32px; border-radius: 8px;">P</div>
-            <button id="closeGuestModal" style="background: none; border: none; cursor: pointer; color: var(--pm-text-disabled);">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="pm-logo-icon" style="width: 40px; height: 40px; border-radius: 12px; font-size: 20px;">P</div>
+            <button id="closeGuestModal" style="background: none; border: none; cursor: pointer; color: var(--pm-text-disabled); border-radius: 50%; padding: 8px;">
                 <span class="material-symbols-rounded">close</span>
             </button>
         </div>
-        <h2>Guest Experience</h2>
-        <p>Choose a unique name to start practicing in 10 seconds. No email required.</p>
+        <h2>Demo Experience</h2>
+        <p style="margin-bottom: 32px;">Create a quick guest profile to test the interview mechanics. No email required.</p>
         
         <form id="guestForm" class="guest-form" method="POST" action="{% url 'accounts:guest_login' %}">
             {% csrf_token %}
-            <div class="guest-input-group">
+            <div class="guest-input-group" style="margin-bottom: 20px;">
                 <label>GUEST USERNAME</label>
-                <input type="text" name="username" placeholder="e.g., guest_alex" required autocomplete="off">
+                <input type="text" name="username" placeholder="e.g., tech_demo01" required autocomplete="off">
             </div>
             
-            <div class="guest-input-group">
-                <label>PIN / PASSWORD</label>
+            <div class="guest-input-group" style="margin-bottom: 32px;">
+                <label>PIN (FOR RETURNING)</label>
                 <input type="password" name="password" placeholder="••••" required>
             </div>
-            <div id="guestError" class="guest-error">Invalid password for this name.</div>
             
-            <button type="submit" class="pm-btn pm-btn-primary" style="padding: 16px; font-size: 16px; border-radius: var(--pm-radius-md);">
-                Start Practicing Free
+            <button type="submit" class="cta-primary" style="width: 100%; justify-content: center;">
+                Launch Demo Room
                 <span class="material-symbols-rounded">arrow_forward</span>
             </button>
         </form>
-        
-        <div style="margin-top: 24px; text-align: center;">
-            <p style="font-size: 13px; color: var(--pm-text-disabled);">Already a guest? Use the same name and PIN to resume.</p>
-        </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // ScrollReveal Logic
+    function reveal() {
+        var reveals = document.querySelectorAll(".reveal");
+        for (var i = 0; i < reveals.length; i++) {
+            var windowHeight = window.innerHeight;
+            var elementTop = reveals[i].getBoundingClientRect().top;
+            var elementVisible = 100;
+            if (elementTop < windowHeight - elementVisible) {
+                reveals[i].classList.add("active");
+            }
+        }
+    }
+    window.addEventListener("scroll", reveal);
+    reveal(); // Trigger on load
+
+    // Guest Modal Logic
     const btn = document.getElementById('guestBtn');
     const modal = document.getElementById('guestModalOverlay');
     const close = document.getElementById('closeGuestModal');

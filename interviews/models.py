@@ -7,7 +7,8 @@ class InterviewSessionStatus(models.TextChoices):
     COMPLETED = 'COMPLETED', 'Completed'
     CANCELLED_BY_USER = 'CANCELLED_BY_USER', 'Cancelled by User'
     FAILED_BY_AI = 'FAILED_BY_AI', 'Failed by AI'
-    EXPIRED = 'EXPIRED', 'Expired' # Added for sessions that might expire if not started/completed
+    EXPIRED = 'EXPIRED', 'Expired'
+    SCHEDULED = 'SCHEDULED', 'Scheduled'
 
 class InterviewSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -16,6 +17,7 @@ class InterviewSession(models.Model):
     personality_mode = models.CharField(max_length=100, default='Friendly')
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
+    scheduled_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=50, choices=InterviewSessionStatus.choices, default=InterviewSessionStatus.IN_PROGRESS)
     # New statuses: COMPLETED, CANCELLED_BY_USER, FAILED_BY_AI
 

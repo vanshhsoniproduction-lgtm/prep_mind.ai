@@ -240,27 +240,75 @@
         {% block content %}{% endblock %}
     </main>
 
-    {% if not user.is_authenticated %}
-    <footer style="background: var(--pm-surface); border-top: 1px solid var(--pm-border-light); padding: 64px 0 32px;">
+    {% if not request.resolver_match.url_name == 'dashboard' and not '/interviews/room/' in request.path %}
+    <footer style="background: #ffffff; border-top: 1px solid var(--pm-border-light); padding: 80px 0 40px; margin-top: auto;">
         <div class="pm-container">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 64px;">
-                <div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 60px;">
+                <!-- Brand Section -->
+                <div style="padding-right: 40px;">
                     <a href="/" class="pm-logo" style="margin-bottom: 24px;">
                         <div class="pm-logo-icon">P</div>
                         <div class="pm-logo-text">Prep<span>Mind</span> AI</div>
                     </a>
-                    <p style="color: var(--pm-text-secondary); font-size: 14px;">Next-generation AI technical interviewer. Master your skills with personalized sessions.</p>
+                    <p style="color: var(--pm-text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                        The ultimate AI-powered mock interview platform for software engineers. Get hired by top tech companies with personalized AI coaching.
+                    </p>
+                    <div style="display: flex; gap: 16px;">
+                        <a href="#" style="color: var(--pm-text-disabled); font-size: 18px;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" style="color: var(--pm-text-disabled); font-size: 18px;"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" style="color: var(--pm-text-disabled); font-size: 18px;"><i class="fab fa-github"></i></a>
+                    </div>
                 </div>
+
+                <!-- Product Links -->
                 <div>
-                    <h4 style="margin-bottom: 24px;">Product</h4>
+                    <h4 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Product</h4>
                     <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
-                        <li><a href="{% url 'core:about' %}" style="color: var(--pm-text-secondary); font-size: 14px;">About</a></li>
+                        <li><a href="/" style="color: var(--pm-text-secondary); font-size: 14px;">Features</a></li>
                         <li><a href="{% url 'payments:pricing' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Pricing</a></li>
+                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Enterprise</a></li>
+                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Demo</a></li>
                     </ul>
                 </div>
+
+                <!-- Company -->
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Company</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                        <li><a href="{% url 'core:about' %}" style="color: var(--pm-text-secondary); font-size: 14px;">About Us</a></li>
+                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Careers</a></li>
+                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Blog</a></li>
+                        <li><a href="#" style="color: var(--pm-text-secondary); font-size: 14px;">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal -->
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px;">Legal</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                        <li><a href="{% url 'core:privacy' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Privacy Policy</a></li>
+                        <li><a href="{% url 'core:terms' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Terms of Service</a></li>
+                        <li><a href="{% url 'core:refunds' %}" style="color: var(--pm-text-secondary); font-size: 14px;">Refund Policy</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact/Waitlist -->
+                <div style="background: #f8f9fa; padding: 24px; border-radius: 16px; border: 1px solid var(--pm-border-light);">
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Get Updates</h4>
+                    <p style="font-size: 12px; color: var(--pm-text-secondary); margin-bottom: 16px;">New features every week.</p>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="email" placeholder="Email" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--pm-border); font-size: 12px; outline: none;">
+                        <button style="background: var(--pm-primary); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
             </div>
-            <div style="border-top: 1px solid var(--pm-border-light); padding-top: 32px; text-align: center;">
-                <p style="color: var(--pm-text-disabled); font-size: 13px;">© 2026 PrepMind AI. All rights reserved.</p>
+
+            <!-- Bottom Copyright -->
+            <div style="border-top: 1px solid var(--pm-border-light); padding-top: 32px; display: flex; justify-content: space-between; align-items: center;">
+                <p style="color: var(--pm-text-disabled); font-size: 13px;">© 2026 PrepMind AI. All rights reserved. Crafted for engineers.</p>
+                <div style="display: flex; gap: 24px; color: var(--pm-text-disabled); font-size: 13px;">
+                    <span>System Status: <span style="color: var(--pm-green);">Online</span></span>
+                </div>
             </div>
         </div>
     </footer>

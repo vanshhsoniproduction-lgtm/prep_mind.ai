@@ -52,9 +52,27 @@
 
 /* Status Indicators */
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.status-completed { background: #34A853; box-shadow: 0 0 10px rgba(52, 168, 83, 0.3); }
-.status-cancelled { background: #ea4335; box-shadow: 0 0 10px rgba(234, 67, 53, 0.3); }
-.status-aborted { background: #fbbc04; box-shadow: 0 0 10px rgba(251, 188, 4, 0.3); }
+.status-completed { background: #34A853; }
+.status-cancelled { background: #ea4335; }
+.status-aborted { background: #fb8c00; }
+.status-scheduled { background: #fbbc04; }
+
+.interview-item.upcoming { border: 2px solid #fbbc04 !important; background: #fffcf0; }
+
+/* Calendar Styles */
+.mini-cal { font-size: 11px; margin-bottom: 20px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-day { padding: 4px 0; border-radius: 8px; color: var(--pm-text-secondary); transition: 0.2s; position: relative; font-weight: 500; border: 2px solid transparent; }
+.cal-day.has-yellow { background: #fef7e0; color: #b05e02; border-color: #fef7e0; font-weight: 700; }
+.cal-day.has-green { background: #e6f4ea; color: #137333; border-color: #e6f4ea; font-weight: 700; }
+.cal-day.has-red { background: #fce8e6; color: #c5221f; border-color: #fce8e6; font-weight: 700; }
+.cal-day.has-orange { background: #feefe3; color: #d93025; border-color: #feefe3; font-weight: 700; }
+.cal-day.has-gray { background: #f1f3f4; color: #5f6368; border-color: #f1f3f4; }
+.cal-day.today { border-color: var(--pm-primary) !important; color: var(--pm-primary); }
+ .cal-day.today::after { content: '•'; position: absolute; top: -2px; right: 2px; font-size: 8px; }
+ .cal-day.has-green.today, .cal-day.has-yellow.today, .cal-day.has-red.today, .cal-day.has-orange.today { border-color: inherit !important; box-shadow: 0 0 0 1px inset rgba(0,0,0,0.1); }
+.cal-header { font-weight: 600; color: var(--pm-text); margin-bottom: 8px; font-size: 12px; }
+.cal-label { font-size: 9px; color: var(--pm-text-disabled); font-weight: 700; padding-bottom: 4px; }
 
 /* Leaderboard */
 .lb-card { padding: 20px; background: white; border-radius: var(--pm-radius-lg); border: 1px solid var(--pm-border-light); }
@@ -128,14 +146,23 @@
                     {% if recent_interviews %}
                         {% for interview in recent_interviews %}
                         <a href="{% url 'analytics:session_detail' interview.id %}" style="text-decoration: none; color: inherit;">
-                        <div class="interview-item">
+                        <div class="interview-item {% if interview.status == 'SCHEDULED' %}upcoming{% endif %}">
                             <div class="interview-left">
                                 <div class="interview-icon"><span class="material-symbols-rounded">work</span></div>
                                 <div class="interview-meta">
                                     <h4>{{ interview.role|title }}</h4>
                                     <p>
-                                        {{ interview.start_time|date:"M d" }}
-                                        <span class="status-dot {% if interview.status == 'COMPLETED' %}status-completed{% elif interview.status == 'CANCELLED_BY_USER' %}status-cancelled{% else %}status-aborted{% endif %}"></span>
+                                        {% if interview.status == 'SCHEDULED' %}
+                                           Scheduled for {{ interview.scheduled_date|date:"M d" }}
+                                        {% else %}
+                                           {{ interview.start_time|date:"M d" }}
+                                        {% endif %}
+                                        <span class="status-dot 
+                                           {% if interview.status == 'COMPLETED' %}status-completed
+                                           {% elif interview.status == 'CANCELLED_BY_USER' %}status-cancelled
+                                           {% elif interview.status == 'SCHEDULED' %}status-scheduled
+                                           {% else %}status-aborted{% endif %}">
+                                        </span>
                                         {{ interview.get_status_display }}
                                     </p>
                                 </div>
@@ -205,6 +232,46 @@
 
                 <button onclick="document.getElementById('leaderboardModal').classList.add('show')" class="pm-btn pm-btn-outline" style="width:100%; margin-top:20px; font-size:12px;">View More Results</button>
                 <a href="{% url 'payments:pricing' %}" class="pm-btn pm-btn-primary" style="width:100%; margin-top:10px; justify-content:center;">Get More Credits</a>
+            </div>
+
+            <!-- 3 Mini Calendars -->
+            <div class="pm-card" style="padding:24px;">
+                <h3 style="font-size:15px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-rounded" style="color:#fbbc04">event</span>
+                    Schedule Outlook
+                </h3>
+                
+                {% for cal in calendars %}
+                <div class="mini-cal">
+                    <div class="cal-header">{{ cal.name }}</div>
+                    <div class="cal-grid">
+                        <div class="cal-label">M</div><div class="cal-label">T</div><div class="cal-label">W</div>
+                        <div class="cal-label">T</div><div class="cal-label">F</div><div class="cal-label">S</div>
+                        <div class="cal-label">S</div>
+                        {% for week in cal.weeks %}
+                            {% for day_obj in week %}
+                                <div class="cal-day {% if day_obj.day == 0 %}hidden{% endif %} {{ day_obj.status }} {% if day_obj.is_today %}today{% endif %}">
+                                    {% if day_obj.day != 0 %}{{ day_obj.day }}{% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 1fr; gap:8px; justify-content:center; border-top:1px solid #f1f3f4; padding-top:12px;">
+                    <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:var(--pm-text-secondary);">
+                        <div style="width:5px; height:5px; border-radius:50%; background:#34A853;"></div> Success
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:var(--pm-text-secondary);">
+                        <div style="width:5px; height:5px; border-radius:50%; background:#fbbc04;"></div> Upcoming
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:var(--pm-text-secondary);">
+                        <div style="width:5px; height:5px; border-radius:50%; background:#ea4335;"></div> Cancelled
+                    </div>
+                    <div style="display:flex; align-items:center; gap:4px; font-size:9px; color:var(--pm-text-secondary);">
+                        <div style="width:5px; height:5px; border-radius:50%; background:#fb8c00;"></div> AI Fail
+                    </div>
+                </div>
             </div>
         </div>
     </div>

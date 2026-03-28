@@ -1,13 +1,6 @@
 .env
-db.sqlite3
 __pycache__/
 *.py[cod]
 *$py.class
-media/
-static/audio/
-static/temp/
-resumes/
 .vscode/
 .idea/
-*.pdf
-.venv/

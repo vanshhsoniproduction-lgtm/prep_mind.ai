@@ -99,6 +99,9 @@ def handle_response(request, session_id):
 
         session = InterviewSession.objects.get(id=session_id)
         if session.stage == 'ended':
+            if session.status != 'COMPLETED' and session.status != 'CANCELLED_BY_USER' and session.status != 'FAILED_BY_AI':
+                 session.status = 'COMPLETED'
+                 session.save()
             return JsonResponse({
                 'success': True,
                 'status': 'ended',
@@ -135,12 +138,13 @@ def handle_response(request, session_id):
 
         if session.stage == 'feedback' or session.question_count > 15:
             feedback_data = generate_final_feedback(history_text + f'Candidate: {user_transcript}\n', resume_context)
-            session.stage = 'ended'
             session.technical_score = feedback_data.get('technical_score', 0)
             session.communication_score = feedback_data.get('communication_score', 0)
             session.confidence_score = feedback_data.get('confidence_score', 0)
             session.feedback_text = feedback_data.get('detailed_feedback', '')
             session.end_time = timezone.now()
+            session.status = 'COMPLETED'
+            session.stage = 'ended'
             session.save()
             
             response_data = {
@@ -150,8 +154,6 @@ def handle_response(request, session_id):
                 'is_ended': True,
                 'redirect_url': f'/dashboard/?schedule_session_id={session.id}',
             }
-            session.status = 'COMPLETED'
-            session.save()
             return JsonResponse(response_data)
 
         exp_level = request.user.experience_level or 'Mid-Level'
@@ -243,6 +245,7 @@ def evaluate_coding_round(request, session_id):
             session.confidence_score = feedback_data.get('confidence_score', 0)
             session.feedback_text = feedback_data.get('detailed_feedback', '')
             session.end_time = timezone.now()
+            session.status = 'COMPLETED'
             session.save()
             return JsonResponse({
                 'success': True,
@@ -308,23 +311,42 @@ def schedule_next_interview(request):
 @require_POST
 def api_schedule_interview(request):
     try:
-        data = json.loads(request.body)
-        title = data.get('title', 'PrepMind Mock Interview')
-        date_str = data.get('date')
-        time_str = data.get('time')
+        # Handle both JSON and standard POST data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            session_id = data.get('session_id')
+            date_str = data.get('date')
+            time_str = data.get('time', '10:00') # default or from field
+        else:
+            session_id = request.POST.get('session_id')
+            date_str = request.POST.get('scheduled_date')
+            time_str = request.POST.get('scheduled_time', '10:00')
 
-        if not date_str or not time_str:
-            return JsonResponse({'success': False, 'error': 'Date and time are required'})
+        if not date_str:
+            return JsonResponse({'success': False, 'error': 'Date is required'})
 
-        from .services.google_calendar_service import create_calendar_event
-        event_link, meet_link = create_calendar_event(
-            user=request.user,
-            title=title,
-            date=date_str,
-            time=time_str,
-            role="Interactive Mock"
-        )
-        return JsonResponse({'success': True, 'event_link': event_link, 'meet_link': meet_link})
+        # Update the session with the scheduled date
+        session = InterviewSession.objects.get(id=session_id, user=request.user)
+        session.scheduled_date = date_str
+        session.status = 'SCHEDULED'
+        session.save()
+
+        # Attempt to create Google Calendar event if logic exists
+        try:
+            from .services.google_calendar_service import create_calendar_event
+            # If time_str is empty we still provide a default
+            create_calendar_event(
+                user=request.user,
+                title=f"PrepMind: {session.role} Interview",
+                date=date_str,
+                time=time_str,
+                role=session.role
+            )
+        except Exception:
+            # Calendar might not be linked, but we still mark it in our database
+            pass
+
+        return redirect('core:dashboard') # Redirect after successful schedule if from form
     except Exception as e:
         import traceback
         traceback.print_exc()

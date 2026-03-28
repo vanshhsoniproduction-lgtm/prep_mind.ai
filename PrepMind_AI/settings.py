@@ -111,6 +111,11 @@ if database_url:
     DATABASES["default"] = dj_database_url.config(default=database_url, conn_max_age=600)
 
 
+TIME_ZONE = 'Asia/Kolkata'
+USE_I18N = True
+USE_TZ = True
+
+
 # ======================
 # Password validation
 # ======================
