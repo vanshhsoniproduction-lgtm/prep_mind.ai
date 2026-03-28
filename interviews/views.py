@@ -111,14 +111,25 @@ def handle_response(request, session_id):
             })
 
         questions = session.questions.order_by('order')
-        history_text = ''
+        
+        history_list = []
+        full_history_str = ''
         for q in questions:
-            history_text += f'Interviewer: {q.question_text}\n'
             ans = Answer.objects.filter(question=q).first()
+            
+            exchange = {"Q": q.question_text[:250]}
+            full_history_str += f'Interviewer: {q.question_text}\n'
+            
             if ans and ans.transcript:
-                history_text += f'Candidate: {ans.transcript}\n'
+                exchange["A"] = ans.transcript[:300]
+                full_history_str += f'Candidate: {ans.transcript}\n'
             if ans and ans.code_submitted:
-                history_text += f'Candidate Code: {ans.code_submitted}\n'
+                exchange["Code"] = "Code omitted for brevity"
+                full_history_str += f'Candidate Code: {ans.code_submitted}\n'
+                
+            history_list.append(exchange)
+            
+        recent_history_json = json.dumps(history_list[-3:])
 
         last_q = questions.last()
 
@@ -137,7 +148,7 @@ def handle_response(request, session_id):
         session.save()
 
         if session.stage == 'feedback' or session.question_count > 15:
-            feedback_data = generate_final_feedback(history_text + f'Candidate: {user_transcript}\n', resume_context)
+            feedback_data = generate_final_feedback(full_history_str + f'Candidate: {user_transcript}\n', resume_context)
             session.technical_score = feedback_data.get('technical_score', 0)
             session.communication_score = feedback_data.get('communication_score', 0)
             session.confidence_score = feedback_data.get('confidence_score', 0)
@@ -158,7 +169,7 @@ def handle_response(request, session_id):
 
         exp_level = request.user.experience_level or 'Mid-Level'
         interaction = generate_next_interaction(
-            history_text,
+            recent_history_json,
             user_transcript,
             session.role,
             exp_level,
@@ -235,10 +246,15 @@ def evaluate_coding_round(request, session_id):
 
         session.save()
 
-        history_text = f'Problem: {problem}\nCode Submitted:\n{code}\nEvaluation: {"Passed" if passed else "Failed"}\n'
+        full_history_text = f'Problem: {problem}\nCode Submitted:\n{code}\nEvaluation: {"Passed" if passed else "Failed"}\n'
+        recent_history_json = json.dumps([{
+            "Task": "Coding Problem", 
+            "Problem": problem[:150],
+            "Status": "Passed" if passed else "Failed"
+        }])
         
         if session.stage == 'feedback':
-            feedback_data = generate_final_feedback(history_text, resume_context)
+            feedback_data = generate_final_feedback(full_history_text, resume_context)
             session.stage = 'ended'
             session.technical_score = feedback_data.get('technical_score', 0)
             session.communication_score = feedback_data.get('communication_score', 0)
@@ -256,7 +272,7 @@ def evaluate_coding_round(request, session_id):
             })
 
         interaction = generate_next_interaction(
-            history_text,
+            recent_history_json,
             'Code generated.',
             session.role,
             request.user.experience_level or 'Mid',
